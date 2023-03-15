@@ -26,7 +26,7 @@ def oai_clip_image(x):
     return CLIP_IMAGE_TRANFORM(x)
 
 def oai_clip_text(t):
-    return CLIP_TEXT_TOKENIZER(t)
+    return CLIP_TEXT_TOKENIZER(t)[0]
 
 def faces_scrfd(x):
     return FACES_IMAGE_TRANFORM(x)

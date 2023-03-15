@@ -36,8 +36,9 @@ class OaiClipVitB32Wrapper(OaiClipWrapper):
 
     name = 'oai-clip-vit-b32'
     raw_inputs = ['image', 'text']
-    preprocessors = [pre.oai_clip_image, pre.oai_clip_text]
+    preprocessors = ['clip-aug', 'clip-tokens']
     dependencies = []
+    use_gpu = True
 
     def __init__(self, device) -> None:
         super().__init__('ViT-B/32', device)
@@ -46,8 +47,9 @@ class OaiClipVitB32Wrapper(OaiClipWrapper):
 class OaiClipVitL14Wrapper(OaiClipWrapper):
     name = 'oai-clip-vit-l14'
     raw_inputs = ['image', 'text']
-    preprocessors = [pre.oai_clip_image, pre.oai_clip_text]
+    preprocessors = ['clip-aug', 'clip-tokens']
     dependencies = []
+    use_gpu = True
 
     def __init__(self, device) -> None:
         super().__init__('ViT-L/14', device)
@@ -56,13 +58,14 @@ class OaiClipVitL14Wrapper(OaiClipWrapper):
 class DetoxifyWrapper(nn.Module, WrapperMixin):
 
     name = 'nsfw-detoxify'
-    raw_inputs = ['text']
-    preprocessors = None
+    raw_inputs = ['text', ]
+    preprocessors = ['identity', ]
     dependencies = []
+    use_gpu = False
 
     def __init__(self, device) -> None:
         super().__init__()
-        self.model = Detoxify('multilingual', device=device)
+        self.model = Detoxify('multilingual', device=f'cuda:{device}')
         logging.info(f'instantiated {self.name} on {device}')
 
     def forward(self, t):
@@ -73,16 +76,17 @@ class DetoxifyWrapper(nn.Module, WrapperMixin):
             scores.append(v)
 
         # column-wise max score
-        maxi, _ = torch.max(scores, 1)
+        maxi, _  = torch.tensor(scores).max(1)
 
         return maxi
 
 class NsfwImageWrapper(nn.Module, WrapperMixin):
 
     name = 'nsfw-img-oai-clip-vit-l-14'
-    raw_inputs = ['image', 'text']
-    preprocessors = None
+    raw_inputs = []
+    preprocessors = []
     dependencies = ['oai-clip-vit-l14']
+    use_gpu = True
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -113,15 +117,16 @@ class NsfwImageWrapper(nn.Module, WrapperMixin):
         return model
 
     def forward(self, z):
-
-        return self.model(z.float())
+        # use only the image feature
+        return self.model(z[0].float())
 
 class IscFtV107Wrapper(nn.Module, WrapperMixin):
 
     name = 'dedup-isc-ft-v107'
     raw_inputs = ['image', ]
-    preprocessors = [pre.dedup, ]
-    dependencies = None
+    preprocessors = ['dedup-aug', ]
+    dependencies = []
+    use_gpu = True
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -143,8 +148,9 @@ class Scrfd10GWrapper(nn.Module, WrapperMixin):
 
     name = 'faces-scrfd10g'
     raw_inputs = ['image', ]
-    preprocessors = [pre.faces_scrfd, ]
-    dependencies = None
+    preprocessors = ['faces-aug', ]
+    dependencies = []
+    use_gpu = True
 
     def __init__(self, device) -> None:
         super().__init__()

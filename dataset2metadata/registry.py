@@ -3,10 +3,19 @@ import inspect
 
 import models
 import postprocessors as post
+import preprocessors as pre
 
 
 models_to_wrappers = {
     cls.name: cls for _, cls in models.__dict__.items() if hasattr(cls, 'name') and inspect.isclass(cls)
+}
+
+preprocessor_lookup = {
+    'clip-aug': pre.oai_clip_image,
+    'clip-tokens': pre.oai_clip_text,
+    'identity': lambda x: x,
+    'dedup-aug': pre.dedup,
+    'faces-aug': pre.faces_scrfd,
 }
 
 # Postprocessors
