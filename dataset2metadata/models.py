@@ -2,7 +2,6 @@ import abc
 import logging
 from collections import OrderedDict
 
-import preprocessors as pre
 import torch
 import torch.nn as nn
 from clip import clip
@@ -76,7 +75,7 @@ class DetoxifyWrapper(nn.Module, WrapperMixin):
             scores.append(v)
 
         # column-wise max score
-        maxi, _  = torch.tensor(scores).max(1)
+        maxi, _  = torch.tensor(scores).max(axis=1)
 
         return maxi
 
@@ -142,7 +141,7 @@ class IscFtV107Wrapper(nn.Module, WrapperMixin):
         scores = z @ self.reference_embeddings # (b,c) @ (c,n) = (b,n)
         max_scores, _ = scores.max(axis=1)
 
-        return max_scores
+        return z, max_scores
 
 class Scrfd10GWrapper(nn.Module, WrapperMixin):
 

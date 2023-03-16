@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 
-def random_seed(seed=0):
+def random_seed(seed: int = 0) -> None:
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)

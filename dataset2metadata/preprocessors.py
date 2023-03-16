@@ -42,3 +42,6 @@ def json_decoder(key, value, json_keys):
     json_dict = JSON_PARSER.parse(value).as_dict()
 
     return [json_dict[k] for k in json_keys]
+
+def identity(a):
+    return a

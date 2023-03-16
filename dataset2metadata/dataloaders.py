@@ -1,12 +1,13 @@
 from functools import partial
+
 import webdataset as wds
-from registry import models_to_wrappers, preprocessor_lookup
 from preprocessors import json_decoder
+from registry import model_lookup, preprocessor_lookup
 
 
 def get_to_tuple_directives(models, additional_fields):
 
-    wrapper_classes = [models_to_wrappers[m] for m in models]
+    wrapper_classes = [model_lookup[m] for m in models]
 
     input_map = {}
 
