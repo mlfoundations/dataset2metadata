@@ -1,15 +1,19 @@
 import torch
-from typing import Dict
+from typing import Dict, Any
 
+def _cpu_helper(entry: Any, to_cpu: bool):
+    if to_cpu:
+        return entry.cpu()
+    return entry
 
-def batched_dot_product(d: Dict, a: str, b: str):
-    return torch.einsum('bn,bn->b', d[a], d[b])
+def batched_dot_product(cache: Dict, k: str, to_cpu: bool=True):
+    return _cpu_helper(torch.einsum('bn,bn->b', cache[k][0], cache[k][1]), to_cpu)
 
-def batched_max(d: Dict, a: str):
-    return None
+def select(cache: Dict, k: str, index: int, to_cpu: bool=True):
+    return _cpu_helper(cache[k][index], to_cpu)
 
-def select(d: Dict, a: str, index: int):
-    return a[index]
+def identity(cache: Dict, k: str, to_cpu: bool=True):
+    return _cpu_helper(cache[k], to_cpu)
 
-def identity(d: Dict, a: str):
-    return d[a]
+def transpose_list(cache: Dict, k: str):
+    return list(map(list, zip(*cache[k])))

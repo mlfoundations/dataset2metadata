@@ -67,7 +67,7 @@ def process(
     # initialize the writer that stores results and dumps them to store
     # TODO: fix the name here
     writer = Writer(
-        hashlib.md5(str(yml['input_tars'])),
+        hashlib.md5(str(yml['input_tars']).encode()).hexdigest(),
         yml['postprocess_features'],
         yml['postprocess_columns'],
         yml['additional_fields'],
@@ -101,12 +101,21 @@ def process(
             with torch.no_grad():
                 model_outputs[m_str] = models[m_str](*model_input)
 
-        # TODO
+            # TODO: make this more general, right now assumes last entry is json fields
+            if len(yml['additional_fields']):
+                model_outputs['json'] = sample[-1]
+
         for k in yml['postprocess_features']:
             writer.update_feature_store(k, postprocess_feature_lookup[k](model_outputs))
 
         for k in yml['postprocess_columns']:
             writer.update_parquet_store(k, postprocess_parquet_lookup[k](model_outputs))
 
-        for k in yml['additional_fields']:
-            pass
+        # if additional fields from json need to be saved, add those to the store
+        if len(yml['additional_fields']):
+            transposed_additional_fields = postprocess_parquet_lookup['json-transpose'](model_outputs)
+            assert len(transposed_additional_fields) == len(yml['additional_fields'])
+            for i, v in enumerate(transposed_additional_fields):
+                writer.update_parquet_store(yml['additional_fields'][i], v)
+
+    writer.write(yml['output_metadata_dir'])

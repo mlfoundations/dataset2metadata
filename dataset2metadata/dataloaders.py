@@ -14,11 +14,11 @@ def get_to_tuple_directives(models, additional_fields):
     # get unique preprocessor directive, which is a raw_input, preprocessor pair
     unique_derectives = []
 
-    for i, wc in enumerate(wrapper_classes):
-        assert len(wc.preprocessors) == len(wc.raw_inputs)
+    for i, model_class in enumerate(wrapper_classes):
+        assert len(model_class.preprocessors) == len(model_class.raw_inputs)
 
         preprocess_directives = [
-            (wc.raw_inputs[i], wc.preprocessors[i]) for i in range(len(wc.preprocessors))
+            (model_class.raw_inputs[i], model_class.preprocessors[i]) for i in range(len(model_class.preprocessors))
         ]
 
         input_map[models[i]] = []
@@ -30,9 +30,9 @@ def get_to_tuple_directives(models, additional_fields):
             else:
                 input_map[models[i]].append(unique_derectives.index(preprocess_directives[j]))
 
-        if len(wc.dependencies):
+        if len(model_class.dependencies):
             # non-numeric, nameded dependencies, i.e., the outputs of other models
-            input_map[models[i]].extend(wc.dependencies)
+            input_map[models[i]].extend(model_class.dependencies)
 
     # add directives to include data from the tars into the webdataset
     if additional_fields is not None and len(additional_fields):

@@ -4,6 +4,7 @@ import torchvision.transforms as T
 from augmentations import SquarePadResizeNorm
 from clip import clip
 import simdjson
+from typing import List
 
 CLIP_SIZE = 224
 FACES_SIZE = 224

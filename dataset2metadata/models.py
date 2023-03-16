@@ -75,13 +75,13 @@ class DetoxifyWrapper(nn.Module, WrapperMixin):
             scores.append(v)
 
         # column-wise max score
-        maxi, _  = torch.tensor(scores).max(axis=1)
+        maxi, _  = torch.tensor(scores).transpose(0, 1).max(axis=1)
 
         return maxi
 
 class NsfwImageWrapper(nn.Module, WrapperMixin):
 
-    name = 'nsfw-img-oai-clip-vit-l-14'
+    name = 'nsfw-image-oai-clip-vit-l-14'
     raw_inputs = []
     preprocessors = []
     dependencies = ['oai-clip-vit-l14']
@@ -117,7 +117,7 @@ class NsfwImageWrapper(nn.Module, WrapperMixin):
 
     def forward(self, z):
         # use only the image feature
-        return self.model(z[0].float())
+        return self.model(z[0].float()).squeeze()
 
 class IscFtV107Wrapper(nn.Module, WrapperMixin):
 
