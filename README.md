@@ -5,7 +5,7 @@ Process a downloaded dataset (currently a [webdataset](https://github.com/webdat
 
 ## Example .yml
 
-```
+```yaml
 models: # model directives, specifying the models to instantiate
   - oai-clip-vit-b32
   - oai-clip-vit-l14

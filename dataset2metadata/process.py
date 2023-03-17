@@ -1,16 +1,19 @@
+from importlib.machinery import SourceFileLoader
 import os
+
 import torch
+import pathlib
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
+import hashlib
 import logging
 from pathlib import Path
-import hashlib
 
 import yaml
 from dataloaders import create_loader
-from registry import model_lookup, postprocess_feature_lookup, postprocess_parquet_lookup
 from PIL import ImageFile
+from registry import update_registry
 from utils import topsort
 from writer import Writer
 
@@ -30,8 +33,7 @@ def check_yml(yml):
         'device',
         'input_tars',
         'output_metadata_dir',
-        'custom_models_pypath',
-        'custom_postprocess_pypath',
+        'custom_pypath',
     ]
 
     for f in yml_fileds:
@@ -44,6 +46,21 @@ def process(
     # parse yml and check resulting dict
     yml = yaml.safe_load(Path(yml_path).read_text())
     check_yml(yml)
+
+    # if local out dir does not exist make it
+    os.makedirs(yml['output_metadata_dir'], exist_ok=True)
+
+    # if the user specifies specific custom implementaion of their own update the registry
+    if yml['custom_pypath'] is not None:
+        custom = SourceFileLoader(
+            pathlib.Path(yml['custom_pypath']).stem,
+            yml['custom_pypath']
+        ).load_module()
+
+        update_registry(custom)
+
+    # import from registry here after we have updated
+    from registry import model_lookup, postprocess_feature_lookup, postprocess_parquet_lookup
 
     # create dataloader based on user input
     dataloader, input_map = create_loader(
@@ -62,7 +79,7 @@ def process(
         {m_str: model_lookup[m_str].dependencies for m_str in yml['models']}
     )
 
-    logging.info(f'topsort order: {topsort_order}')
+    logging.info(f'topsort model evaluation order: {topsort_order}')
 
     # initialize the writer that stores results and dumps them to store
     # TODO: fix the name here

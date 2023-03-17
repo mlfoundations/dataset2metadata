@@ -2,10 +2,12 @@ from functools import partial
 
 import webdataset as wds
 from preprocessors import json_decoder
-from registry import model_lookup, preprocessor_lookup
 
 
 def get_to_tuple_directives(models, additional_fields):
+
+    # import here as registry may have updated
+    from registry import model_lookup
 
     wrapper_classes = [model_lookup[m] for m in models]
 
@@ -43,6 +45,9 @@ def get_to_tuple_directives(models, additional_fields):
     return unique_derectives, input_map
 
 def create_loader(input_shards, models, additional_fields, nworkers, batch_size):
+
+    # import here as registry may have updated
+    from registry import preprocessor_lookup
 
     (
         unique_derectives,
