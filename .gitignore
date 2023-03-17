@@ -5,7 +5,8 @@ logs*/
 *.err
 *.out
 dataset2metadata/assets/
-tests/
+tests/test_out/
+tests/tar_test_files/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
