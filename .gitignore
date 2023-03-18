@@ -7,6 +7,7 @@ logs*/
 dataset2metadata/assets/
 tests/test_out/
 tests/tar_test_files/
+src/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

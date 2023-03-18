@@ -1,5 +1,6 @@
 import abc
 import logging
+import os
 from collections import OrderedDict
 
 import torch
@@ -7,8 +8,13 @@ import torch.nn as nn
 from clip import clip
 from detoxify import Detoxify
 from isc_feature_extractor import create_model
+from utils import download
 
 logging.getLogger().setLevel(logging.INFO)
+
+# cloud_checkpoints = {
+#     'nsfw-image': 'https://github.com/mlfoundations/dataset2metadata/releases/download/v0.1.0-alpha/3c97d5478477c181bfa29a33e6933f710c8ec587e3c3551ff855e293acdaf390_nsfw-image.pt',
+# }
 
 
 class WrapperMixin(metaclass=abc.ABCMeta):

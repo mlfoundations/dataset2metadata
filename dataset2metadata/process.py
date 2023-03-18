@@ -86,8 +86,7 @@ def process(
     writer = Writer(
         hashlib.md5(str(yml['input_tars']).encode()).hexdigest(),
         yml['postprocess_features'],
-        yml['postprocess_columns'],
-        yml['additional_fields'],
+        yml['postprocess_columns'] + yml['additional_fields'],
     )
 
     for sample in dataloader:

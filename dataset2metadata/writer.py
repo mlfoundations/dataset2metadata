@@ -14,13 +14,12 @@ class Writer(object):
     def __init__(
             self,
             name: str,
-            postprocess_feature_fields: List[str],
-            postprocess_parquet_fields: List[str],
-            additional_columns: List[str]
+            feature_fields: List[str],
+            parquet_fields: List[str],
         ) -> None:
         self.name = name
-        self.feature_store = {e : [] for e in postprocess_feature_fields}
-        self.parquet_store = {e: [] for e in postprocess_parquet_fields + additional_columns}
+        self.feature_store = {e : [] for e in feature_fields}
+        self.parquet_store = {e: [] for e in parquet_fields}
 
     def update_feature_store(self, k, v):
         self.feature_store[k].append(v)
@@ -39,11 +38,13 @@ class Writer(object):
             if len(self.parquet_store):
                 df = pd.DataFrame.from_dict(self.parquet_store)
                 df.to_parquet(os.path.join(out_dir_path, f'{self.name}.parquet'), engine='pyarrow')
+                logging.info(f'saved metadata: {f"{self.name}.parquet"}')
 
             if len(self.feature_store):
                 fs, output_path = fsspec.core.url_to_fs(os.path.join(out_dir_path, f'{self.name}.npz'))
                 with fs.open(output_path, "wb") as f:
                     np.savez_compressed(f, **self.feature_store)
+                    logging.info(f'saved features: {f"{self.name}.npz"}')
 
                 return True
 
