@@ -1,6 +1,7 @@
 detoxify==0.5.0
 fire==0.4.0
 fsspec==2022.11.0
+s3fs
 numpy==1.23.5
 pandas==1.5.1
 Pillow==9.4.0

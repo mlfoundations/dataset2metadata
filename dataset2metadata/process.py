@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 
 import yaml
+import fsspec
 from dataset2metadata.dataloaders import create_loader
 from PIL import ImageFile
 from dataset2metadata.registry import update_registry
@@ -48,7 +49,8 @@ def process(
     check_yml(yml)
 
     # if local out dir does not exist make it
-    os.makedirs(yml['output_metadata_dir'], exist_ok=True)
+    fs, output_path = fsspec.core.url_to_fs(yml['output_metadata_dir'])
+    fs.makedirs(output_path, exist_ok=True)
 
     # if the user specifies specific custom implementaion of their own update the registry
     if yml['custom_pypath'] is not None:

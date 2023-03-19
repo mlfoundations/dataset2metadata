@@ -23,7 +23,7 @@ if __name__ == "__main__":
         description="Generate infered metadata for a dataset",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        entry_points={"console_scripts": ["dataset2metadata = dataset2metadata:main"]},
+        entry_points={"console_scripts": ["dataset2metadata = dataset2metadata.main:main"]},
         author="Samir Gadre",
         author_email="syagadre@gmail.com",
         url="https://github.com/mlfoundations/dataset2metadata",
