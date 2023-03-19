@@ -1,13 +1,12 @@
 from functools import partial
 
-from transformers import Blip2Processor, Blip2ForConditionalGeneration
-import torch.nn as nn
 import torch
+import torch.nn as nn
+from transformers import Blip2ForConditionalGeneration, Blip2Processor
+
+from dataset2metadata.postprocessors import identity
 
 bp = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-
-def identity(cache, k):
-    return cache[k]
 
 def blip_pre(x):
 
@@ -17,7 +16,7 @@ def blip_pre(x):
 
     if x.height == 3 and x.width == 3:
         # edge case as huggingface tries to guess the channel dim
-        x = x.resize((6, 6))
+        x = x.resize((4, 4))
 
     a = bp(images=x, return_tensors="pt").to(torch.float16)
 
@@ -30,7 +29,7 @@ class Blip2Wrapper(nn.Module):
     raw_inputs = ['image', ]
     preprocessors = ['blip2-aug', ]
     dependencies = []
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -43,7 +42,9 @@ class Blip2Wrapper(nn.Module):
 
     def forward(self, x):
         generated_ids = self.model.generate(pixel_values=x)
-        generated_text = [t.strip() for t in bp.batch_decode(generated_ids, skip_special_tokens=True)]
+        generated_text = [
+            t.strip() for t in bp.batch_decode(generated_ids, skip_special_tokens=True)
+        ]
 
         return generated_text
 
@@ -60,6 +61,6 @@ model_lookup = {
 
 # postprocessors
 postprocess_parquet_lookup = {
-    'blip2-cap': partial(identity, k='blip2'),
+    'blip2-cap': partial(identity, model='blip2'),
 }
 postprocess_feature_lookup = {}

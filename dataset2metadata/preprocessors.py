@@ -1,7 +1,7 @@
 from functools import partial
 
 import torchvision.transforms as T
-from augmentations import SquarePadResizeNorm
+from dataset2metadata.augmentations import SquarePadResizeNorm
 from clip import clip
 import simdjson
 from typing import List

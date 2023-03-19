@@ -8,7 +8,7 @@ import torch.nn as nn
 from clip import clip
 from detoxify import Detoxify
 from isc_feature_extractor import create_model
-from utils import download
+from dataset2metadata.utils import download
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -43,7 +43,7 @@ class OaiClipVitB32Wrapper(OaiClipWrapper):
     raw_inputs = ['image', 'text']
     preprocessors = ['clip-aug', 'clip-tokens']
     dependencies = []
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__('ViT-B/32', device)
@@ -54,7 +54,7 @@ class OaiClipVitL14Wrapper(OaiClipWrapper):
     raw_inputs = ['image', 'text']
     preprocessors = ['clip-aug', 'clip-tokens']
     dependencies = []
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__('ViT-L/14', device)
@@ -66,7 +66,7 @@ class DetoxifyWrapper(nn.Module, WrapperMixin):
     raw_inputs = ['text', ]
     preprocessors = ['identity', ]
     dependencies = []
-    use_gpu = False
+    to_device = False
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -91,7 +91,7 @@ class NsfwImageWrapper(nn.Module, WrapperMixin):
     raw_inputs = []
     preprocessors = []
     dependencies = ['oai-clip-vit-l14']
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -131,7 +131,7 @@ class IscFtV107Wrapper(nn.Module, WrapperMixin):
     raw_inputs = ['image', ]
     preprocessors = ['dedup-aug', ]
     dependencies = []
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__()
@@ -155,7 +155,7 @@ class Scrfd10GWrapper(nn.Module, WrapperMixin):
     raw_inputs = ['image', ]
     preprocessors = ['faces-aug', ]
     dependencies = []
-    use_gpu = True
+    to_device = True
 
     def __init__(self, device) -> None:
         super().__init__()

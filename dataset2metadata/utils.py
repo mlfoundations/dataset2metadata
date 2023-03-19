@@ -1,13 +1,13 @@
 import hashlib
 import os
 import random
-from typing import List, Dict, Set
 import urllib
 import warnings
-from tqdm import tqdm
+from typing import Dict, List, Set
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 
 def random_seed(seed: int = 0) -> None:

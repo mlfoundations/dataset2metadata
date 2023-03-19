@@ -17,6 +17,6 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "/admin/home-sy/repos/dataset2metadata/tests/tar_test_files/00005717.tar" # brace expand suported
-output_metadata_dir: "/admin/home-sy/repos/dataset2metadata/tests/test_out" # can be arbitrary path
-custom_pypath: "/admin/home-sy/repos/dataset2metadata/tests/custom/custom.py" # if model not known, look in this python file for implementation
+input_tars: "./tests/tar_test_files/00005717.tar" # brace expand suported
+output_metadata_dir: "./tests/test_out" # can be arbitrary path
+custom_pypath: "./tests/custom/custom.py" # if model not known, look in this python file for implementation

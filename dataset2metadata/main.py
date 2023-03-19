@@ -1,5 +1,5 @@
 import fire
-from process import process
+from dataset2metadata.process import process
 
 
 def main():

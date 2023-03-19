@@ -11,11 +11,11 @@ import logging
 from pathlib import Path
 
 import yaml
-from dataloaders import create_loader
+from dataset2metadata.dataloaders import create_loader
 from PIL import ImageFile
-from registry import update_registry
-from utils import topsort
-from writer import Writer
+from dataset2metadata.registry import update_registry
+from dataset2metadata.utils import topsort
+from dataset2metadata.writer import Writer
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 logging.getLogger().setLevel(logging.INFO)
@@ -60,7 +60,10 @@ def process(
         update_registry(custom)
 
     # import from registry here after we have updated
-    from registry import model_lookup, postprocess_feature_lookup, postprocess_parquet_lookup
+    from dataset2metadata.registry import (
+        model_lookup, postprocess_feature_lookup,
+        postprocess_parquet_lookup
+    )
 
     # create dataloader based on user input
     dataloader, input_map = create_loader(
@@ -102,7 +105,7 @@ def process(
             for i in input_map[m_str]:
 
                 if isinstance(i, int):
-                    if models[m_str].use_gpu and i not in cache:
+                    if models[m_str].to_device and i not in cache:
                         cache[i] = sample[i].to(yml['device'])
                     else:
                         cache[i] = sample[i]

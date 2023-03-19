@@ -1,13 +1,13 @@
 from functools import partial
 
 import webdataset as wds
-from preprocessors import json_decoder
+from dataset2metadata.preprocessors import json_decoder
 
 
 def get_to_tuple_directives(models, additional_fields):
 
     # import here as registry may have updated
-    from registry import model_lookup
+    from dataset2metadata.registry import model_lookup
 
     wrapper_classes = [model_lookup[m] for m in models]
 
@@ -20,7 +20,7 @@ def get_to_tuple_directives(models, additional_fields):
         assert len(model_class.preprocessors) == len(model_class.raw_inputs)
 
         preprocess_directives = [
-            (model_class.raw_inputs[i], model_class.preprocessors[i]) for i in range(len(model_class.preprocessors))
+            (model_class.raw_inputs[k], model_class.preprocessors[k]) for k in range(len(model_class.preprocessors))
         ]
 
         input_map[models[i]] = []
@@ -47,7 +47,7 @@ def get_to_tuple_directives(models, additional_fields):
 def create_loader(input_shards, models, additional_fields, nworkers, batch_size):
 
     # import here as registry may have updated
-    from registry import preprocessor_lookup
+    from dataset2metadata.registry import preprocessor_lookup
 
     (
         unique_derectives,
