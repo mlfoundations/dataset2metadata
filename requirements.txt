@@ -13,5 +13,5 @@ torchvision==0.14.0
 tqdm==4.64.1
 transformers==4.27.1
 webdataset==0.2.31
--e git+https://github.com/openai/CLIP.git#egg=clip
--e git+https://github.com/lyakaap/ISC21-Descriptor-Track-1st#egg=isc_feature_extractor
+clip @ git+https://github.com/openai/CLIP.git#egg=clip
+isc_feature_extractor @ git+https://github.com/lyakaap/ISC21-Descriptor-Track-1st#egg=isc_feature_extractor
