@@ -61,6 +61,6 @@ model_lookup = {
 
 # postprocessors
 postprocess_parquet_lookup = {
-    'blip2-cap': partial(identity, model='blip2'),
+    'blip2-cap': partial(identity, model='blip2', to_cpu=False),
 }
 postprocess_feature_lookup = {}
