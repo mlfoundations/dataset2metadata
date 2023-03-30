@@ -11,7 +11,7 @@ def test_braceexpand():
 
 def test_custom():
     try:
-        process('./tests/ymls/test_custom.yml')
+        process('./custom/blip2.yml')
         assert True
     except Exception as e:
         print(str(e))

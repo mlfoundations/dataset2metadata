@@ -42,10 +42,13 @@ def check_yml(yml):
             raise ValueError(f'yml must contain field: {f}')
 
 def process(
-    yml_path: str,
+    yml,
 ):
-    # parse yml and check resulting dict
-    yml = yaml.safe_load(Path(yml_path).read_text())
+
+    if type(yml) is str:
+        # parse yml and check resulting dict
+        yml = yaml.safe_load(Path(yml).read_text())
+
     check_yml(yml)
 
     # if local out dir does not exist make it

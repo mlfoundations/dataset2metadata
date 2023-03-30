@@ -19,4 +19,4 @@ batch_size: 512
 device: 0
 input_tars: "./tests/tar_test_files/00005717.tar" # brace expand suported
 output_metadata_dir: "./tests/test_out" # can be arbitrary path
-custom_pypath: "./custom/custom_blip2.py" # if model not known, look in this python file for implementation
+custom_pypath: "./custom/my_blip2.py" # if model not known, look in this python file for implementation
