@@ -18,5 +18,5 @@ nworkers: 2
 batch_size: 512
 device: 0
 input_tars: "./tests/tar_test_files/00005717.tar" # brace expand suported
-output_metadata_dir: "./tests/test_out" # can be arbitrary path
+output_metadata_dir: "s3://s-laion/sy_dbg_multi_gpu_blip2" # can be arbitrary path
 custom_pypath: "./custom/my_blip2.py" # if model not known, look in this python file for implementation

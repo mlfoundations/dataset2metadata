@@ -9,15 +9,15 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=12
 #SBATCH --mem 100G
-#SBATCH --array=0-UPPERBOUND
+#SBATCH --array=0-1
 #SBATCH --requeue
 
 echo "Processing job $SLURM_ARRAY_TASK_ID.yml"
 
-cd LOCATION_OF_UR_REPO
+cd /admin/home-sy/repos/dataset2metadata
 
 FILE=logs/
-if test -f "$FILE"; then
+if test -d "./$FILE"; then
     echo ""
 else
     echo "$FILE does not exist."
