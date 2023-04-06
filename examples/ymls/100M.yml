@@ -3,13 +3,14 @@ models: # model directives, specifying the models to instantiate
   - oai-clip-vit-l14
   - nsfw-detoxify
   - nsfw-image-oai-clip-vit-l-14
-  # - faces-scrfd10g
+  - faces-scrfd10g
   - dedup-isc-ft-v107
 postprocess_columns: # postprocessing directives
   - oai-clip-vit-b32-score
   - oai-clip-vit-l14-score
   - nsfw-detoxify-score
   - nsfw-image-score
+  - face-boxes
   - dedup-isc-ft-v107-score
 postprocess_features: # saved in an npz format
   - oai-clip-vit-b32-image

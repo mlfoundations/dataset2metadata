@@ -1,8 +1,9 @@
-from importlib.machinery import SourceFileLoader
 import os
+import pathlib
+from importlib.machinery import SourceFileLoader
+from typing import List
 
 import torch
-import pathlib
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -10,10 +11,11 @@ import hashlib
 import logging
 from pathlib import Path
 
-import yaml
 import fsspec
-from dataset2metadata.dataloaders import create_loader
+import yaml
 from PIL import ImageFile
+
+from dataset2metadata.dataloaders import create_loader
 from dataset2metadata.registry import update_registry
 from dataset2metadata.utils import topsort
 from dataset2metadata.writer import Writer
@@ -65,10 +67,9 @@ def process(
         update_registry(custom)
 
     # import from registry here after we have updated
-    from dataset2metadata.registry import (
-        model_lookup, postprocess_feature_lookup,
-        postprocess_parquet_lookup
-    )
+    from dataset2metadata.registry import (model_lookup,
+                                           postprocess_feature_lookup,
+                                           postprocess_parquet_lookup)
 
     # create dataloader based on user input
     dataloader, input_map = create_loader(
@@ -111,13 +112,20 @@ def process(
 
                 if isinstance(i, int):
                     if models[m_str].to_device and i not in cache:
-                        cache[i] = sample[i].to(yml['device'])
+                        if isinstance(sample[i], List):
+                            # if list needs to be moved to device transpose and move it
+                            sample[i] = list(zip(*sample[i]))
+                            for j in range(len(sample[i])):
+                                sample[i][j] = torch.cat(sample[i][j]).to(yml['device'])
+                            cache[i] = sample[i]
+                        else:
+                            cache[i] = sample[i].to(yml['device'])
                     else:
                         cache[i] = sample[i]
 
                     model_input.append(cache[i])
                 else:
-                    # use previously computed outputs ans new inputs
+                    # use previously computed outputs and new inputs
                     # NOTE: assume downstream model consumes on same device as upstream
                     assert i in model_outputs
                     model_input.append(model_outputs[i])

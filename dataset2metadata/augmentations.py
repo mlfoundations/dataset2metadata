@@ -46,4 +46,4 @@ class SquarePadResizeNorm:
         if isinstance(resized_img, PIL.Image.Image):
             resized_img = F.to_tensor(resized_img)
 
-        return self.normalize(resized_img), padding
+        return self.normalize(resized_img).unsqueeze(0), padding.unsqueeze(0)

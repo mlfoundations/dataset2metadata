@@ -28,6 +28,7 @@ postprocess_parquet_lookup = {
     'nsfw-image-score': partial(post.identity, model='nsfw-image-oai-clip-vit-l-14'),
     'dedup-isc-ft-v107-score': partial(post.select, model='dedup-isc-ft-v107', index=1),
     'json-transpose': partial(post.transpose_list, model='json'),
+    'face-boxes': partial(post.identity, model='faces-scrfd10g', to_cpu=False),
 }
 
 postprocess_feature_lookup = {

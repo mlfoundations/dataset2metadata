@@ -9,6 +9,7 @@ from clip import clip
 from detoxify import Detoxify
 from isc_feature_extractor import create_model
 from dataset2metadata.utils import download
+from dataset2metadata.face_detection.scrfd_wrapper import FaceDetector
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -159,4 +160,11 @@ class Scrfd10GWrapper(nn.Module, WrapperMixin):
 
     def __init__(self, device) -> None:
         super().__init__()
+        self.model = FaceDetector(
+            '/admin/home-sy/repos/dataset2metadata/dataset2metadata/assets/scrfd_10g.pt',
+            device
+        )
         logging.info(f'instantiated {self.name} on {device}')
+
+    def forward(self, x):
+        return self.model.detect_faces(images=x[0], paddings=x[1])
