@@ -12,6 +12,7 @@ from pathlib import Path
 
 import yaml
 import fsspec
+import s3fs
 from dataset2metadata.dataloaders import create_loader
 from PIL import ImageFile
 from dataset2metadata.registry import update_registry
@@ -53,7 +54,13 @@ def process(
 
     # if local out dir does not exist make it
     fs, output_path = fsspec.core.url_to_fs(yml['output_metadata_dir'])
+    print("OUTPUT", output_path)
     fs.makedirs(output_path, exist_ok=True)
+    s3 = s3fs.S3FileSystem(anon=False)
+    completed = s3.ls(yml['output_metadata_dir'])
+    completed_parquets = [p for p in completed if 'parquet' in p]
+    shard_cache = set([Path(s).stem for s in completed_parquets])
+    print("shard cache", list(shard_cache)[0])
 
     # if the user specifies specific custom implementaion of their own update the registry
     if yml['custom_pypath'] is not None:
@@ -91,8 +98,12 @@ def process(
 
     # initialize the writer that stores results and dumps them to store
     # TODO: fix the name here
+    hashname = hashlib.md5(str(yml['input_tars']).encode()).hexdigest()
+    if hashname in shard_cache:
+        print("shard already processed. Exiting...")
+        exit()
     writer = Writer(
-        hashlib.md5(str(yml['input_tars']).encode()).hexdigest(),
+        hashname,
         yml['postprocess_features'],
         yml['postprocess_columns'] + yml['additional_fields'],
     )

@@ -9,12 +9,13 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=12
 #SBATCH --mem 100G
-#SBATCH --array=0-1
+#SBATCH --array=1-640%64
 #SBATCH --requeue
 
 echo "Processing job $SLURM_ARRAY_TASK_ID.yml"
 
-cd /admin/home-sy/repos/dataset2metadata
+cd /fsx/home-thaottn/dataset2metadata
+export TRANSFORMERS_CACHE=/fsx/home-thaottn/.cache/
 
 FILE=logs/
 if test -d "./$FILE"; then
@@ -24,8 +25,8 @@ else
     exit 1
 fi
 
-export PATH="/admin/home-$USER/miniconda3/condabin:$PATH"
-source /admin/home-$USER/miniconda3/etc/profile.d/conda.sh
+export PATH="/fsx/home-$USER/miniconda3/condabin:$PATH"
+source /fsx/home-$USER/miniconda3/etc/profile.d/conda.sh
 
-conda activate dataset2metadata
-srun dataset2metadata --yml examples/jobs/$SLURM_ARRAY_TASK_ID.yml
+conda activate tng_metadata
+srun dataset2metadata --yml_path examples/jobs/$SLURM_ARRAY_TASK_ID.yml

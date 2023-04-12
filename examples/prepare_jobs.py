@@ -7,18 +7,19 @@ import yaml
 
 if __name__ == '__main__':
 
-    yml_template = yaml.safe_load(Path('custom/blip2.yml').read_text())
-    num_tars_per_wds = 10
+    yml_template = yaml.safe_load(Path('custom/clipl14.yml').read_text()) #TODO: edit
+    num_tars_per_wds = 20
     num_wds_per_worker = 1
-    jobs_dir_path = 'examples/jobs'
+    jobs_dir_path = 'examples/jobs' #TODO: edit
 
 
     fs, output_path = fsspec.core.url_to_fs(
-        's3://s-laion/datanet_10M_pool-baselines/clip_threshold/clip_l14_f0.3/seed_0/'
+            's3://s-laion/thaottn/100M_pool_blip2_captions_shards/' #TODO: edit
     )
 
-    shards = sorted(fs.glob(os.path.join(output_path, '**/*.tar')))
+    shards = sorted(fs.glob(os.path.join(output_path, '*.tar')))
     shards = [f"pipe:aws s3 cp s3://{s} -" for s in shards]
+    print(len(shards))
     groups = [shards[i:i+num_tars_per_wds] for i in range(0, len(shards), num_tars_per_wds)]
 
     for i, g in enumerate(groups):
