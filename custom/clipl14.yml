@@ -1,0 +1,17 @@
+models: # model directives, specifying the models to instantiate
+  - oai-clip-vit-l14
+postprocess_columns: # postprocessing directives
+  - oai-clip-vit-l14-score
+additional_fields: # fields in a webdataset json to carry over into the metadata
+  - uid
+  - url
+  - caption
+  - original_width
+  - original_height
+  - sha256
+nworkers: 2
+batch_size: 512
+device: 0
+input_tars: "./tests/tar_test_files/00005717.tar" # brace expand suported
+output_metadata_dir: "s3://s-laion/thaottn/100M_pool_blip2_captions_metadata" # can be arbitrary path
+custom_pypath: "./custom/my_blip2.py" # if model not known, look in this python file for implementation
