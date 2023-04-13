@@ -26,22 +26,30 @@ logging.getLogger().setLevel(logging.INFO)
 def check_yml(yml):
 
     # manditory fields in the yml
-    yml_fileds = [
+    yml_fields = [
         'models',
-        'postprocess_columns',
-        'postprocess_features',
-        'additional_fields',
         'nworkers',
         'batch_size',
         'device',
         'input_tars',
         'output_metadata_dir',
-        'custom_pypath',
     ]
 
-    for f in yml_fileds:
+    yml_optional_fields = [
+        'postprocess_columns',
+        'postprocess_features',
+        'additional_fields',
+        'custom_pypath',
+        'reprocess',
+    ]
+
+    for f in yml_fields:
         if f not in yml:
-            raise ValueError(f'yml must contain field: {f}')
+            raise ValueError(f'missing required yml field: {f}')
+
+    for f in yml:
+        if f not in yml_fields + yml_optional_fields:
+            raise ValueError(f'unknown field: {f}')
 
 def process(
     yml,
@@ -57,8 +65,20 @@ def process(
     fs, output_path = fsspec.core.url_to_fs(yml['output_metadata_dir'])
     fs.makedirs(output_path, exist_ok=True)
 
+    # assign a name to the group of shards being processed
+    name = hashlib.md5(str(yml['input_tars']).encode()).hexdigest()
+
+    # cache if result already there and user does not want to reprocess
+    if 'reprocess' not in yml or not yml['reprocess']:
+        # cache
+        completed = fs.ls(output_path)
+        completed_parquets = [p for p in completed if 'parquet' in p]
+        if name in set([Path(s).stem for s in completed_parquets]):
+            logging.info(f'found cached result: {name}')
+            return
+
     # if the user specifies specific custom implementaion of their own update the registry
-    if yml['custom_pypath'] is not None:
+    if 'custom_pypath' in yml and yml['custom_pypath'] is not None:
         custom = SourceFileLoader(
             pathlib.Path(yml['custom_pypath']).stem,
             yml['custom_pypath']
@@ -92,10 +112,19 @@ def process(
 
     # initialize the writer that stores results and dumps them to store
     # TODO: fix the name here
+    feature_fields = []
+    parquet_fields = []
+    if 'postprocess_features' in yml:
+        feature_fields = yml['postprocess_features']
+    if 'postprocess_columns' in yml:
+        parquet_fields.extend(yml['postprocess_columns'])
+    if 'additional_fields' in yml:
+        parquet_fields.extend(yml['additional_fields'])
+
     writer = Writer(
-        hashlib.md5(str(yml['input_tars']).encode()).hexdigest(),
-        yml['postprocess_features'],
-        yml['postprocess_columns'] + yml['additional_fields'],
+        name,
+        feature_fields,
+        parquet_fields,
     )
 
     for sample in dataloader:
@@ -137,14 +166,16 @@ def process(
             if len(yml['additional_fields']):
                 model_outputs['json'] = sample[-1]
 
-        for k in yml['postprocess_features']:
-            writer.update_feature_store(k, postprocess_feature_lookup[k](model_outputs))
+        if 'postprocess_features' in yml:
+            for k in yml['postprocess_features']:
+                writer.update_feature_store(k, postprocess_feature_lookup[k](model_outputs))
 
-        for k in yml['postprocess_columns']:
-            writer.update_parquet_store(k, postprocess_parquet_lookup[k](model_outputs))
+        if 'postprocess_columns' in yml:
+            for k in yml['postprocess_columns']:
+                writer.update_parquet_store(k, postprocess_parquet_lookup[k](model_outputs))
 
         # if additional fields from json need to be saved, add those to the store
-        if len(yml['additional_fields']):
+        if 'additional_fields' in yml and len(yml['additional_fields']):
             transposed_additional_fields = postprocess_parquet_lookup['json-transpose'](model_outputs)
             assert len(transposed_additional_fields) == len(yml['additional_fields'])
             for i, v in enumerate(transposed_additional_fields):

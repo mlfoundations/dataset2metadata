@@ -8,7 +8,11 @@ from dataset2metadata.postprocessors import identity
 
 bp = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
 
+def _convert_image_to_rgb(image):
+    return image.convert("RGB")
+
 def blip_pre(x):
+    x = _convert_image_to_rgb(x)
 
     if x.height == 1 and x.width == 1:
         # edge case as huggingface tries to guess the channel dim
