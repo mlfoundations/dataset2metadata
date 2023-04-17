@@ -62,6 +62,7 @@ def create_loader(input_shards, models, additional_fields, nworkers, batch_size)
     pipeline = [wds.SimpleShardList(input_shards), ]
 
     pipeline.extend([
+        wds.split_by_worker,
         wds.tarfile_to_samples(handler=wds.warn_and_continue),
         wds.decode(
             'pilrgb',

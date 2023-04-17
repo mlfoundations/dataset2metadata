@@ -2,18 +2,15 @@ from functools import partial
 
 import torch
 import torch.nn as nn
-from transformers import Blip2ForConditionalGeneration, Blip2Processor
+from transformers import Blip2ForConditionalGeneration, Blip2Processor, Blip2Config
 
 from dataset2metadata.postprocessors import identity
 
 bp = Blip2Processor.from_pretrained("Salesforce/blip2-opt-2.7b")
-
-def _convert_image_to_rgb(image):
-    return image.convert("RGB")
+#config: https://huggingface.co/Salesforce/blip2-opt-2.7b/resolve/main/config.json
 
 def blip_pre(x):
-    x = _convert_image_to_rgb(x)
-
+    '''
     if x.height == 1 and x.width == 1:
         # edge case as huggingface tries to guess the channel dim
         x = x.resize((2, 2))
@@ -21,6 +18,14 @@ def blip_pre(x):
     if x.height == 3 and x.width == 3:
         # edge case as huggingface tries to guess the channel dim
         x = x.resize((4, 4))
+    '''
+    if x.height < 5:
+        new_width = int(x.width * 5 / x.height)
+        x = x.resize((new_width, 5))
+
+    if x.width < 5:
+        new_height = int(x.height * 5 / x.width)
+        x = x.resize((5, new_height))
 
     a = bp(images=x, return_tensors="pt").to(torch.float16)
 
@@ -42,6 +47,11 @@ class Blip2Wrapper(nn.Module):
             torch_dtype=torch.float16).to(device)
 
         self.model.eval()
+        self.model.config.text_config.min_length = 5
+        self.model.config.text_config.max_length = 40
+        #self.model.config.text_config.do_sample = True
+        #self.model.config.text_config.top_p = 0.9
+        #self.model.config.text_config.repetition_penality = 1.1
         print(f'instantiated {self.name} on {device}')
 
     def forward(self, x):
@@ -49,7 +59,6 @@ class Blip2Wrapper(nn.Module):
         generated_text = [
             t.strip() for t in bp.batch_decode(generated_ids, skip_special_tokens=True)
         ]
-
         return generated_text
 
 

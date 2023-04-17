@@ -1,7 +1,7 @@
 models: # model directives, specifying the models to instantiate
-  - blip2
+  - oai-clip-vit-l14
 postprocess_columns: # postprocessing directives
-  - blip2-cap
+  - oai-clip-vit-l14-score
 additional_fields: # fields in a webdataset json to carry over into the metadata
   - uid
   - url
@@ -12,6 +12,6 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "s3://s-laion/datanet_100M_pool-baselines/basic/all/seed_1/reshards_n1/0/" # brace expand suported
-output_metadata_dir: "s3://s-laion/thaottn/100M_pool_blip2_captions" # can be arbitrary path - TODO: SET THIS
+input_tars: "./tests/tar_test_files/00005717.tar" # brace expand suported
+output_metadata_dir: "s3://s-laion/thaottn/100M_pool_blip2_captions_metadata" # can be arbitrary path
 custom_pypath: "./custom/my_blip2.py" # if model not known, look in this python file for implementation

@@ -54,7 +54,6 @@ def check_yml(yml):
 def process(
     yml,
 ):
-
     if type(yml) is str:
         # parse yml and check resulting dict
         yml = yaml.safe_load(Path(yml).read_text())
