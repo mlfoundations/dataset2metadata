@@ -9,14 +9,14 @@ import fsspec
 
 logging.getLogger().setLevel(logging.INFO)
 
-class Writer(object):
 
+class Writer(object):
     def __init__(
-            self,
-            name: str,
-            feature_fields: List[str],
-            parquet_fields: List[str],
-        ) -> None:
+        self,
+        name: str,
+        feature_fields: List[str],
+        parquet_fields: List[str],
+    ) -> None:
         self.name = name
 
         # store things like CLIP features, ultimately in an npz
@@ -33,28 +33,44 @@ class Writer(object):
 
     def write(self, out_dir_path):
         try:
+            logging.info("flattening")
             for k in self.feature_store:
-                self.feature_store[k] = self._flatten_helper(self.feature_store[k], to_npy=True)
+                self.feature_store[k] = self._flatten_helper(
+                    self.feature_store[k], to_npy=True
+                )
 
+            logging.info("more flattening")
             for k in self.parquet_store:
                 self.parquet_store[k] = self._flatten_helper(self.parquet_store[k])
 
             if len(self.parquet_store):
+                logging.info("covert to df")
                 df = pd.DataFrame.from_dict(self.parquet_store)
-                df.to_parquet(os.path.join(out_dir_path, f'{self.name}.parquet'), engine='pyarrow')
-                logging.info(f'saved metadata: {f"{self.name}.parquet"}')
+
+                fs, output_path = fsspec.core.url_to_fs(
+                    os.path.join(out_dir_path, f"{self.name}.parquet")
+                )
+                with fs.open(output_path, "wb") as f:
+                    logging.info("saving parquet")
+                    df.to_parquet(f, engine="pyarrow")
+                logging.info("file closed")
+                # logging.info(f'saved metadata: {f"{self.name}.parquet"}')
 
             if len(self.feature_store):
-                fs, output_path = fsspec.core.url_to_fs(os.path.join(out_dir_path, f'{self.name}.npz'))
+                fs, output_path = fsspec.core.url_to_fs(
+                    os.path.join(out_dir_path, f"{self.name}.npz")
+                )
                 with fs.open(output_path, "wb") as f:
+                    logging.info("saving npz")
                     np.savez_compressed(f, **self.feature_store)
-                    logging.info(f'saved features: {f"{self.name}.npz"}')
+
+                logging.info(f'saved features: {f"{self.name}.npz"}')
 
                 return True
 
         except Exception as e:
             logging.exception(e)
-            logging.error(f'failed to write metadata for shard: {self.name}')
+            logging.error(f"failed to write metadata for shard: {self.name}")
             return False
 
     def _flatten_helper(self, l, to_npy=False):

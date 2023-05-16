@@ -9,7 +9,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-gpu=12
 #SBATCH --mem 100G
-#SBATCH --array=106 # 0-796%208
+#SBATCH --array=0-796%96
 #SBATCH --requeue
 
 echo "Processing job $SLURM_ARRAY_TASK_ID.yml"
