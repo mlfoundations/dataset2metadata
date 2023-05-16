@@ -25,7 +25,7 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
   - original_width
   - original_height
   - sha256
-nworkers: 2
+nworkers: 4
 batch_size: 512
 device: 0
 input_tars: "pipe:aws s3 cp {} -" # brace expand suported

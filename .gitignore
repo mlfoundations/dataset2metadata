@@ -11,6 +11,9 @@ src/
 examples/jobs/
 examples/logs/
 dev/
+jobs*
+logs*
+tmp*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
