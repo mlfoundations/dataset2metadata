@@ -13,12 +13,13 @@ import torchvision
 
 
 def reduce_mean(tensor):
-    """"Obtain the mean of tensor on different GPUs."""
+    """ "Obtain the mean of tensor on different GPUs."""
     if not (dist.is_available() and dist.is_initialized()):
         return tensor
     tensor = tensor.clone()
     dist.all_reduce(tensor.div_(dist.get_world_size()), op=dist.ReduceOp.SUM)
     return tensor
+
 
 def bbox2result(bboxes, labels, num_classes):
     """Convert detection results to a list of numpy arrays.
@@ -37,11 +38,8 @@ def bbox2result(bboxes, labels, num_classes):
             labels = labels.detach().cpu().numpy()
         return [bboxes[labels == i, :] for i in range(num_classes)]
 
-def bbox_overlaps(bboxes1,
-                  bboxes2,
-                  mode='iou',
-                  eps=1e-6,
-                  use_legacy_coordinate=False):
+
+def bbox_overlaps(bboxes1, bboxes2, mode="iou", eps=1e-6, use_legacy_coordinate=False):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
     Args:
         bboxes1 (ndarray): Shape (n, 4)
@@ -59,11 +57,11 @@ def bbox_overlaps(bboxes1,
         ious (ndarray): Shape (n, k)
     """
 
-    assert mode in ['iou', 'iof']
+    assert mode in ["iou", "iof"]
     if not use_legacy_coordinate:
-        extra_length = 0.
+        extra_length = 0.0
     else:
-        extra_length = 1.
+        extra_length = 1.0
     bboxes1 = bboxes1.astype(np.float32)
     bboxes2 = bboxes2.astype(np.float32)
     rows = bboxes1.shape[0]
@@ -77,17 +75,20 @@ def bbox_overlaps(bboxes1,
         ious = np.zeros((cols, rows), dtype=np.float32)
         exchange = True
     area1 = (bboxes1[:, 2] - bboxes1[:, 0] + extra_length) * (
-        bboxes1[:, 3] - bboxes1[:, 1] + extra_length)
+        bboxes1[:, 3] - bboxes1[:, 1] + extra_length
+    )
     area2 = (bboxes2[:, 2] - bboxes2[:, 0] + extra_length) * (
-        bboxes2[:, 3] - bboxes2[:, 1] + extra_length)
+        bboxes2[:, 3] - bboxes2[:, 1] + extra_length
+    )
     for i in range(bboxes1.shape[0]):
         x_start = np.maximum(bboxes1[i, 0], bboxes2[:, 0])
         y_start = np.maximum(bboxes1[i, 1], bboxes2[:, 1])
         x_end = np.minimum(bboxes1[i, 2], bboxes2[:, 2])
         y_end = np.minimum(bboxes1[i, 3], bboxes2[:, 3])
         overlap = np.maximum(x_end - x_start + extra_length, 0) * np.maximum(
-            y_end - y_start + extra_length, 0)
-        if mode == 'iou':
+            y_end - y_start + extra_length, 0
+        )
+        if mode == "iou":
             union = area1[i] + area2 - overlap
         else:
             union = area1[i] if not exchange else area2
@@ -96,6 +97,7 @@ def bbox_overlaps(bboxes1,
     if exchange:
         ious = ious.T
     return ious
+
 
 def distance2bbox(points, distance, max_shape=None):
     """Decode distance prediction to bounding box.
@@ -137,12 +139,12 @@ def distance2bbox(points, distance, max_shape=None):
             assert max_shape.size(0) == bboxes.size(0)
 
         min_xy = x1.new_tensor(0)
-        max_xy = torch.cat([max_shape, max_shape],
-                           dim=-1).flip(-1).unsqueeze(-2)
+        max_xy = torch.cat([max_shape, max_shape], dim=-1).flip(-1).unsqueeze(-2)
         bboxes = torch.where(bboxes < min_xy, min_xy, bboxes)
         bboxes = torch.where(bboxes > max_xy, max_xy, bboxes)
 
     return bboxes
+
 
 def bbox2distance(points, bbox, max_dis=None, eps=0.1):
     """Decode bounding box based on distances.
@@ -165,11 +167,14 @@ def bbox2distance(points, bbox, max_dis=None, eps=0.1):
         bottom = bottom.clamp(min=0, max=max_dis - eps)
     return torch.stack([left, top, right, bottom], -1)
 
-def batched_nms(boxes: torch.Tensor,
-                scores: torch.Tensor,
-                idxs: torch.Tensor,
-                nms_cfg: Optional[Dict],
-                class_agnostic: bool = False) -> Tuple[torch.Tensor, torch.Tensor]:
+
+def batched_nms(
+    boxes: torch.Tensor,
+    scores: torch.Tensor,
+    idxs: torch.Tensor,
+    nms_cfg: Optional[Dict],
+    class_agnostic: bool = False,
+) -> Tuple[torch.Tensor, torch.Tensor]:
     r"""Performs non-maximum suppression in a batched fashion.
     Modified from `torchvision/ops/boxes.py#L39
     <https://github.com/pytorch/vision/blob/
@@ -214,7 +219,7 @@ def batched_nms(boxes: torch.Tensor,
         return torch.cat([boxes, scores[:, None]], -1), inds
 
     nms_cfg_ = nms_cfg.copy()
-    class_agnostic = nms_cfg_.pop('class_agnostic', class_agnostic)
+    class_agnostic = nms_cfg_.pop("class_agnostic", class_agnostic)
     if class_agnostic:
         boxes_for_nms = boxes
     else:
@@ -228,20 +233,17 @@ def batched_nms(boxes: torch.Tensor,
             # which is larger than polygon max coordinate
             # max(x1, y1, x2, y2,x3, y3, x4, y4)
             max_coordinate = boxes[..., :2].max() + boxes[..., 2:4].max()
-            offsets = idxs.to(boxes) * (
-                max_coordinate + torch.tensor(1).to(boxes))
+            offsets = idxs.to(boxes) * (max_coordinate + torch.tensor(1).to(boxes))
             boxes_ctr_for_nms = boxes[..., :2] + offsets[:, None]
-            boxes_for_nms = torch.cat([boxes_ctr_for_nms, boxes[..., 2:5]],
-                                      dim=-1)
+            boxes_for_nms = torch.cat([boxes_ctr_for_nms, boxes[..., 2:5]], dim=-1)
         else:
             max_coordinate = boxes.max()
-            offsets = idxs.to(boxes) * (
-                max_coordinate + torch.tensor(1).to(boxes))
+            offsets = idxs.to(boxes) * (max_coordinate + torch.tensor(1).to(boxes))
             boxes_for_nms = boxes + offsets[:, None]
 
     nms_op = torchvision.ops.nms
 
-    split_thr = nms_cfg_.pop('split_thr', 10000)
+    split_thr = nms_cfg_.pop("split_thr", 10000)
     # Won't split to multiple nms nodes when exporting to onnx
     if boxes_for_nms.shape[0] < split_thr or torch.onnx.is_in_onnx_export():
         keep = nms_op(boxes_for_nms, scores, iou_threshold=nms_cfg_["iou_threshold"])
@@ -249,13 +251,17 @@ def batched_nms(boxes: torch.Tensor,
         scores = scores[keep]
 
     else:
-        max_num = nms_cfg_.pop('max_num', -1)
+        max_num = nms_cfg_.pop("max_num", -1)
         total_mask = scores.new_zeros(scores.size(), dtype=torch.bool)
         # Some type of nms would reweight the score, such as SoftNMS
         scores_after_nms = scores.new_zeros(scores.size())
         for id in torch.unique(idxs):
             mask = (idxs == id).nonzero(as_tuple=False).view(-1)
-            keep = nms_op(boxes_for_nms[mask], scores[mask],iou_threshold=nms_cfg_["iou_threshold"])
+            keep = nms_op(
+                boxes_for_nms[mask],
+                scores[mask],
+                iou_threshold=nms_cfg_["iou_threshold"],
+            )
             total_mask[mask[keep]] = True
             scores_after_nms[mask[keep]] = scores[mask[keep]]
         keep = total_mask.nonzero(as_tuple=False).view(-1)
@@ -272,13 +278,16 @@ def batched_nms(boxes: torch.Tensor,
     boxes = torch.cat([boxes, scores[:, None]], -1)
     return boxes, keep
 
-def multiclass_nms(multi_bboxes,
-                   multi_scores,
-                   score_thr,
-                   nms_cfg,
-                   max_num=-1,
-                   score_factors=None,
-                   return_inds=False):
+
+def multiclass_nms(
+    multi_bboxes,
+    multi_scores,
+    score_thr,
+    nms_cfg,
+    max_num=-1,
+    score_factors=None,
+    return_inds=False,
+):
     """NMS for multi-class bboxes.
     Args:
         multi_bboxes (Tensor): shape (n, #class*4) or (n, 4)
@@ -302,8 +311,7 @@ def multiclass_nms(multi_bboxes,
     if multi_bboxes.shape[1] > 4:
         bboxes = multi_bboxes.view(multi_scores.size(0), -1, 4)
     else:
-        bboxes = multi_bboxes[:, None].expand(
-            multi_scores.size(0), num_classes, 4)
+        bboxes = multi_bboxes[:, None].expand(multi_scores.size(0), num_classes, 4)
 
     scores = multi_scores[:, :-1]
 
@@ -323,7 +331,8 @@ def multiclass_nms(multi_bboxes,
     if score_factors is not None:
         # expand the shape to match original shape of score
         score_factors = score_factors.view(-1, 1).expand(
-            multi_scores.size(0), num_classes)
+            multi_scores.size(0), num_classes
+        )
         score_factors = score_factors.reshape(-1)
         scores = scores * score_factors
 
@@ -340,8 +349,10 @@ def multiclass_nms(multi_bboxes,
 
     if bboxes.numel() == 0:
         if torch.onnx.is_in_onnx_export():
-            raise RuntimeError('[ONNX Error] Can not record NMS '
-                               'as it has not been executed this time')
+            raise RuntimeError(
+                "[ONNX Error] Can not record NMS "
+                "as it has not been executed this time"
+            )
         dets = torch.cat([bboxes, scores[:, None]], -1)
         if return_inds:
             return dets, labels, inds
@@ -359,6 +370,7 @@ def multiclass_nms(multi_bboxes,
     else:
         return dets, labels[keep]
 
+
 def images_to_levels(target, num_levels):
     """Convert targets by image to targets by feature level.
     [target_img0, target_img1] -> [target_level0, target_level1, ...]
@@ -373,22 +385,21 @@ def images_to_levels(target, num_levels):
         start = end
     return level_targets
 
+
 def unmap(data, count, inds, fill=0):
     """Unmap a subset of item (data) back to the original set of items (of size
     count)"""
     if data.dim() == 1:
-        ret = data.new_full((count, ), fill)
+        ret = data.new_full((count,), fill)
         ret[inds.type(torch.bool)] = data
     else:
-        new_size = (count, ) + data.size()[1:]
+        new_size = (count,) + data.size()[1:]
         ret = data.new_full(new_size, fill)
         ret[inds.type(torch.bool), :] = data
     return ret
 
-def anchor_inside_flags(flat_anchors,
-                        valid_flags,
-                        img_shape,
-                        allowed_border=0):
+
+def anchor_inside_flags(flat_anchors, valid_flags, img_shape, allowed_border=0):
     """Check whether the anchors are inside the border.
     Args:
         flat_anchors (torch.Tensor): Flatten anchors, shape (n, 4).
@@ -402,14 +413,17 @@ def anchor_inside_flags(flat_anchors,
     """
     img_h, img_w = img_shape[:2]
     if allowed_border >= 0:
-        inside_flags = valid_flags & \
-            (flat_anchors[:, 0] >= -allowed_border) & \
-            (flat_anchors[:, 1] >= -allowed_border) & \
-            (flat_anchors[:, 2] < img_w + allowed_border) & \
-            (flat_anchors[:, 3] < img_h + allowed_border)
+        inside_flags = (
+            valid_flags
+            & (flat_anchors[:, 0] >= -allowed_border)
+            & (flat_anchors[:, 1] >= -allowed_border)
+            & (flat_anchors[:, 2] < img_w + allowed_border)
+            & (flat_anchors[:, 3] < img_h + allowed_border)
+        )
     else:
         inside_flags = valid_flags
     return inside_flags
+
 
 def multi_apply(func, *args, **kwargs):
     """Apply function to a list of arguments.
@@ -429,6 +443,7 @@ def multi_apply(func, *args, **kwargs):
     map_results = map(pfunc, *args)
     return tuple(map(list, zip(*map_results)))
 
+
 def reduce_loss(loss, reduction):
     """Reduce loss as specified.
     Args:
@@ -446,7 +461,8 @@ def reduce_loss(loss, reduction):
     elif reduction_enum == 2:
         return loss.sum()
 
-def weight_reduce_loss(loss, weight=None, reduction='mean', avg_factor=None):
+
+def weight_reduce_loss(loss, weight=None, reduction="mean", avg_factor=None):
     """Apply element-wise weight and reduce loss.
     Args:
         loss (Tensor): Element-wise loss.
@@ -465,12 +481,13 @@ def weight_reduce_loss(loss, weight=None, reduction='mean', avg_factor=None):
         loss = reduce_loss(loss, reduction)
     else:
         # if reduction is mean, then average the loss by avg_factor
-        if reduction == 'mean':
+        if reduction == "mean":
             loss = loss.sum() / avg_factor
         # if reduction is 'none', then do nothing, otherwise raise an error
-        elif reduction != 'none':
+        elif reduction != "none":
             raise ValueError('avg_factor can not be used with reduction="sum"')
     return loss
+
 
 def weighted_loss(loss_func):
     """Create a weighted version of a given loss function.
@@ -499,21 +516,17 @@ def weighted_loss(loss_func):
     """
 
     @functools.wraps(loss_func)
-    def wrapper(pred,
-                target,
-                weight=None,
-                reduction='mean',
-                avg_factor=None,
-                **kwargs):
+    def wrapper(pred, target, weight=None, reduction="mean", avg_factor=None, **kwargs):
         # get element-wise loss
         loss = loss_func(pred, target, **kwargs)
-        #print('LLL', pred.shape, target.shape, loss.shape, weight.shape)
+        # print('LLL', pred.shape, target.shape, loss.shape, weight.shape)
         loss = weight_reduce_loss(loss, weight, reduction, avg_factor)
         return loss
 
     return wrapper
 
-def bbox2delta(proposals, gt, means=(0., 0., 0., 0.), stds=(1., 1., 1., 1.)):
+
+def bbox2delta(proposals, gt, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
     """Compute deltas of proposals w.r.t. gt.
     We usually compute the deltas of x, y, w, h of proposals w.r.t ground
     truth bboxes to get regression target.
@@ -554,15 +567,18 @@ def bbox2delta(proposals, gt, means=(0., 0., 0., 0.), stds=(1., 1., 1., 1.)):
 
     return deltas
 
-def delta2bbox(rois,
-               deltas,
-               means=(0., 0., 0., 0.),
-               stds=(1., 1., 1., 1.),
-               max_shape=None,
-               wh_ratio_clip=16 / 1000,
-               clip_border=True,
-               add_ctr_clamp=False,
-               ctr_clamp=32):
+
+def delta2bbox(
+    rois,
+    deltas,
+    means=(0.0, 0.0, 0.0, 0.0),
+    stds=(1.0, 1.0, 1.0, 1.0),
+    max_shape=None,
+    wh_ratio_clip=16 / 1000,
+    clip_border=True,
+    add_ctr_clamp=False,
+    ctr_clamp=32,
+):
     """Apply deltas to shift/scale base boxes.
     Typically the rois are anchor or proposed bounding boxes and the deltas are
     network outputs used to shift/scale those boxes.
@@ -624,8 +640,8 @@ def delta2bbox(rois,
 
     # Compute width/height of each roi
     rois_ = rois.repeat(1, num_classes).reshape(-1, 4)
-    pxy = ((rois_[:, :2] + rois_[:, 2:]) * 0.5)
-    pwh = (rois_[:, 2:] - rois_[:, :2])
+    pxy = (rois_[:, :2] + rois_[:, 2:]) * 0.5
+    pwh = rois_[:, 2:] - rois_[:, :2]
 
     dxy_wh = pwh * dxy
 
@@ -647,6 +663,7 @@ def delta2bbox(rois,
     bboxes = bboxes.reshape(num_bboxes, -1)
     return bboxes
 
+
 @weighted_loss
 def quality_focal_loss(pred, target, beta=2.0):
     r"""Quality Focal Loss (QFL) is from `Generalized Focal Loss: Learning
@@ -663,7 +680,9 @@ def quality_focal_loss(pred, target, beta=2.0):
     Returns:
         torch.Tensor: Loss tensor with shape (N,).
     """
-    assert len(target) == 2, """target for QFL must be a tuple of two elements,
+    assert (
+        len(target) == 2
+    ), """target for QFL must be a tuple of two elements,
         including category label and quality label, respectively"""
     # label denotes the category id, score denotes the quality score
     label, score = target
@@ -673,7 +692,8 @@ def quality_focal_loss(pred, target, beta=2.0):
     scale_factor = pred_sigmoid
     zerolabel = scale_factor.new_zeros(pred.shape)
     loss = F.binary_cross_entropy_with_logits(
-        pred, zerolabel, reduction='none') * scale_factor.pow(beta)
+        pred, zerolabel, reduction="none"
+    ) * scale_factor.pow(beta)
 
     # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
     bg_class_ind = pred.size(1)
@@ -682,11 +702,12 @@ def quality_focal_loss(pred, target, beta=2.0):
     # positives are supervised by bbox quality (IoU) score
     scale_factor = score[pos] - pred_sigmoid[pos, pos_label]
     loss[pos, pos_label] = F.binary_cross_entropy_with_logits(
-        pred[pos, pos_label], score[pos],
-        reduction='none') * scale_factor.abs().pow(beta)
+        pred[pos, pos_label], score[pos], reduction="none"
+    ) * scale_factor.abs().pow(beta)
 
     loss = loss.sum(dim=1, keepdim=False)
     return loss
+
 
 class QualityFocalLoss(torch.nn.Module):
     r"""Quality Focal Loss (QFL) is a variant of `Generalized Focal Loss:
@@ -701,24 +722,17 @@ class QualityFocalLoss(torch.nn.Module):
         loss_weight (float): Loss weight of current loss.
     """
 
-    def __init__(self,
-                 use_sigmoid=True,
-                 beta=2.0,
-                 reduction='mean',
-                 loss_weight=1.0):
+    def __init__(self, use_sigmoid=True, beta=2.0, reduction="mean", loss_weight=1.0):
         super(QualityFocalLoss, self).__init__()
-        assert use_sigmoid is True, 'Only sigmoid in QFL supported now.'
+        assert use_sigmoid is True, "Only sigmoid in QFL supported now."
         self.use_sigmoid = use_sigmoid
         self.beta = beta
         self.reduction = reduction
         self.loss_weight = loss_weight
 
-    def forward(self,
-                pred,
-                target,
-                weight=None,
-                avg_factor=None,
-                reduction_override=None):
+    def forward(
+        self, pred, target, weight=None, avg_factor=None, reduction_override=None
+    ):
         """Forward function.
         Args:
             pred (torch.Tensor): Predicted joint representation of
@@ -734,9 +748,8 @@ class QualityFocalLoss(torch.nn.Module):
                 override the original reduction method of the loss.
                 Defaults to None.
         """
-        assert reduction_override in (None, 'none', 'mean', 'sum')
-        reduction = (
-            reduction_override if reduction_override else self.reduction)
+        assert reduction_override in (None, "none", "mean", "sum")
+        reduction = reduction_override if reduction_override else self.reduction
         if self.use_sigmoid:
             loss_cls = self.loss_weight * quality_focal_loss(
                 pred,
@@ -744,10 +757,12 @@ class QualityFocalLoss(torch.nn.Module):
                 weight,
                 beta=self.beta,
                 reduction=reduction,
-                avg_factor=avg_factor)
+                avg_factor=avg_factor,
+            )
         else:
             raise NotImplementedError
         return loss_cls
+
 
 @weighted_loss
 def diou_loss(pred, target, eps=1e-7):
@@ -791,8 +806,8 @@ def diou_loss(pred, target, eps=1e-7):
     b2_x1, b2_y1 = target[:, 0], target[:, 1]
     b2_x2, b2_y2 = target[:, 2], target[:, 3]
 
-    left = ((b2_x1 + b2_x2) - (b1_x1 + b1_x2))**2 / 4
-    right = ((b2_y1 + b2_y2) - (b1_y1 + b1_y2))**2 / 4
+    left = ((b2_x1 + b2_x2) - (b1_x1 + b1_x2)) ** 2 / 4
+    right = ((b2_y1 + b2_y2) - (b1_y1 + b1_y2)) ** 2 / 4
     rho2 = left + right
 
     # DIoU
@@ -800,26 +815,27 @@ def diou_loss(pred, target, eps=1e-7):
     loss = 1 - dious
     return loss
 
-class DIoULoss(torch.nn.Module):
 
-    def __init__(self, eps=1e-6, reduction='mean', loss_weight=1.0):
+class DIoULoss(torch.nn.Module):
+    def __init__(self, eps=1e-6, reduction="mean", loss_weight=1.0):
         super(DIoULoss, self).__init__()
         self.eps = eps
         self.reduction = reduction
         self.loss_weight = loss_weight
 
-    def forward(self,
-                pred,
-                target,
-                weight=None,
-                avg_factor=None,
-                reduction_override=None,
-                **kwargs):
+    def forward(
+        self,
+        pred,
+        target,
+        weight=None,
+        avg_factor=None,
+        reduction_override=None,
+        **kwargs
+    ):
         if weight is not None and not torch.any(weight > 0):
             return (pred * weight).sum()  # 0
-        assert reduction_override in (None, 'none', 'mean', 'sum')
-        reduction = (
-            reduction_override if reduction_override else self.reduction)
+        assert reduction_override in (None, "none", "mean", "sum")
+        reduction = reduction_override if reduction_override else self.reduction
         if weight is not None and weight.dim() > 1:
             # TODO: remove this in the future
             # reduce the weight of shape (n, 4) to (n,) to match the
@@ -833,5 +849,6 @@ class DIoULoss(torch.nn.Module):
             eps=self.eps,
             reduction=reduction,
             avg_factor=avg_factor,
-            **kwargs)
+            **kwargs
+        )
         return loss
