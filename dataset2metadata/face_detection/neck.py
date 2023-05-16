@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 import warnings
 
+
 class ConvModule(nn.Module):
     """A conv block that bundles conv/norm/activation layers.
     This block simplifies the usage of convolution layers, which are commonly
@@ -57,23 +58,25 @@ class ConvModule(nn.Module):
             Default: ('conv', 'norm', 'act').
     """
 
-    _abbr_ = 'conv_block'
+    _abbr_ = "conv_block"
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: Union[int, Tuple[int, int]],
-                 stride: Union[int, Tuple[int, int]] = 1,
-                 padding: Union[int, Tuple[int, int]] = 0,
-                 dilation: Union[int, Tuple[int, int]] = 1,
-                 groups: int = 1,
-                 bias: Union[bool, str] = 'auto',
-                 conv_cfg: Optional[Dict] = None,
-                 norm_cfg: Optional[Dict] = None,
-                 act_cfg: Optional[Dict] = dict(type='ReLU'),
-                 inplace: bool = True,
-                 with_spectral_norm: bool = False,
-                 order: tuple = ('conv', 'norm', 'act')):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: Union[int, Tuple[int, int]],
+        stride: Union[int, Tuple[int, int]] = 1,
+        padding: Union[int, Tuple[int, int]] = 0,
+        dilation: Union[int, Tuple[int, int]] = 1,
+        groups: int = 1,
+        bias: Union[bool, str] = "auto",
+        conv_cfg: Optional[Dict] = None,
+        norm_cfg: Optional[Dict] = None,
+        act_cfg: Optional[Dict] = dict(type="ReLU"),
+        inplace: bool = True,
+        with_spectral_norm: bool = False,
+        order: tuple = ("conv", "norm", "act"),
+    ):
         super().__init__()
         assert conv_cfg is None or isinstance(conv_cfg, dict)
         assert norm_cfg is None or isinstance(norm_cfg, dict)
@@ -85,12 +88,12 @@ class ConvModule(nn.Module):
         self.with_spectral_norm = with_spectral_norm
         self.order = order
         assert isinstance(self.order, tuple) and len(self.order) == 3
-        assert set(order) == {'conv', 'norm', 'act'}
+        assert set(order) == {"conv", "norm", "act"}
 
         self.with_norm = norm_cfg is not None
         self.with_activation = act_cfg is not None
         # if the conv layer is before a norm layer, bias is unnecessary.
-        if bias == 'auto':
+        if bias == "auto":
             bias = not self.with_norm
         self.with_bias = bias
 
@@ -105,7 +108,8 @@ class ConvModule(nn.Module):
             padding=conv_padding,
             dilation=dilation,
             groups=groups,
-            bias=bias)
+            bias=bias,
+        )
         # export the attributes of self.conv to a higher level for convenience
         self.in_channels = self.conv.in_channels
         self.out_channels = self.conv.out_channels
@@ -123,7 +127,7 @@ class ConvModule(nn.Module):
         # build normalization layers
         if self.with_norm:
             # norm layer is after conv layer
-            if order.index('norm') > order.index('conv'):
+            if order.index("norm") > order.index("conv"):
                 norm_channels = out_channels
             else:
                 norm_channels = in_channels
@@ -131,7 +135,9 @@ class ConvModule(nn.Module):
                 self.bn = nn.BatchNorm2d(norm_channels)
                 self.norm_name = "bn"
             elif norm_cfg["type"] == "GN":
-                self.gn = nn.GroupNorm(num_groups=norm_cfg["num_groups"], num_channels=norm_channels)
+                self.gn = nn.GroupNorm(
+                    num_groups=norm_cfg["num_groups"], num_channels=norm_channels
+                )
                 self.norm_name = "gn"
         else:
             self.norm_name = None  # type: ignore
@@ -147,16 +153,15 @@ class ConvModule(nn.Module):
         else:
             return None
 
-    def forward(self,
-                x: torch.Tensor,
-                activate: bool = True,
-                norm: bool = True) -> torch.Tensor:
+    def forward(
+        self, x: torch.Tensor, activate: bool = True, norm: bool = True
+    ) -> torch.Tensor:
         for layer in self.order:
-            if layer == 'conv':
+            if layer == "conv":
                 x = self.conv(x)
-            elif layer == 'norm' and norm and self.with_norm:
+            elif layer == "norm" and norm and self.with_norm:
                 x = self.norm(x)
-            elif layer == 'act' and activate and self.with_activation:
+            elif layer == "act" and activate and self.with_activation:
                 x = self.activate(x)
         return x
 
@@ -211,20 +216,22 @@ class FPN(nn.Module):
         outputs[3].shape = torch.Size([1, 11, 43, 43])
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_outs,
-                 start_level=0,
-                 end_level=-1,
-                 add_extra_convs=False,
-                 extra_convs_on_inputs=True,
-                 relu_before_extra_convs=False,
-                 no_norm_on_lateral=False,
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 act_cfg=None,
-                 upsample_cfg=dict(mode='nearest')):
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        num_outs,
+        start_level=0,
+        end_level=-1,
+        add_extra_convs=False,
+        extra_convs_on_inputs=True,
+        relu_before_extra_convs=False,
+        no_norm_on_lateral=False,
+        conv_cfg=None,
+        norm_cfg=None,
+        act_cfg=None,
+        upsample_cfg=dict(mode="nearest"),
+    ):
         super(FPN, self).__init__()
         assert isinstance(in_channels, list)
         self.in_channels = in_channels
@@ -250,17 +257,19 @@ class FPN(nn.Module):
         assert isinstance(add_extra_convs, (str, bool))
         if isinstance(add_extra_convs, str):
             # Extra_convs_source choices: 'on_input', 'on_lateral', 'on_output'
-            assert add_extra_convs in ('on_input', 'on_lateral', 'on_output')
+            assert add_extra_convs in ("on_input", "on_lateral", "on_output")
         elif add_extra_convs:  # True
             if extra_convs_on_inputs:
                 # TODO: deprecate `extra_convs_on_inputs`
-                warnings.simplefilter('once')
+                warnings.simplefilter("once")
                 warnings.warn(
                     '"extra_convs_on_inputs" will be deprecated in v2.9.0,'
-                    'Please use "add_extra_convs"', DeprecationWarning)
-                self.add_extra_convs = 'on_input'
+                    'Please use "add_extra_convs"',
+                    DeprecationWarning,
+                )
+                self.add_extra_convs = "on_input"
             else:
-                self.add_extra_convs = 'on_output'
+                self.add_extra_convs = "on_output"
 
         self.lateral_convs = nn.ModuleList()
         self.fpn_convs = nn.ModuleList()
@@ -273,7 +282,8 @@ class FPN(nn.Module):
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg if not self.no_norm_on_lateral else None,
                 act_cfg=act_cfg,
-                inplace=False)
+                inplace=False,
+            )
             fpn_conv = ConvModule(
                 out_channels,
                 out_channels,
@@ -282,7 +292,8 @@ class FPN(nn.Module):
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
-                inplace=False)
+                inplace=False,
+            )
 
             self.lateral_convs.append(l_conv)
             self.fpn_convs.append(fpn_conv)
@@ -291,7 +302,7 @@ class FPN(nn.Module):
         extra_levels = num_outs - self.backbone_end_level + self.start_level
         if self.add_extra_convs and extra_levels >= 1:
             for i in range(extra_levels):
-                if i == 0 and self.add_extra_convs == 'on_input':
+                if i == 0 and self.add_extra_convs == "on_input":
                     in_channels = self.in_channels[self.backbone_end_level - 1]
                 else:
                     in_channels = out_channels
@@ -304,7 +315,8 @@ class FPN(nn.Module):
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg,
-                    inplace=False)
+                    inplace=False,
+                )
                 self.fpn_convs.append(extra_fpn_conv)
 
     def forward(self, inputs):
@@ -322,19 +334,17 @@ class FPN(nn.Module):
         for i in range(used_backbone_levels - 1, 0, -1):
             # In some cases, fixing `scale factor` (e.g. 2) is preferred, but
             #  it cannot co-exist with `size` in `F.interpolate`.
-            if 'scale_factor' in self.upsample_cfg:
-                laterals[i - 1] += F.interpolate(laterals[i],
-                                                 **self.upsample_cfg)
+            if "scale_factor" in self.upsample_cfg:
+                laterals[i - 1] += F.interpolate(laterals[i], **self.upsample_cfg)
             else:
                 prev_shape = laterals[i - 1].shape[2:]
                 laterals[i - 1] += F.interpolate(
-                    laterals[i], size=prev_shape, **self.upsample_cfg)
+                    laterals[i], size=prev_shape, **self.upsample_cfg
+                )
 
         # build outputs
         # part 1: from original levels
-        outs = [
-            self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels)
-        ]
+        outs = [self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels)]
         # part 2: add extra levels
         if self.num_outs > len(outs):
             # use max pool to get more levels on top of outputs
@@ -344,11 +354,11 @@ class FPN(nn.Module):
                     outs.append(F.max_pool2d(outs[-1], 1, stride=2))
             # add conv layers on top of original feature maps (RetinaNet)
             else:
-                if self.add_extra_convs == 'on_input':
+                if self.add_extra_convs == "on_input":
                     extra_source = inputs[self.backbone_end_level - 1]
-                elif self.add_extra_convs == 'on_lateral':
+                elif self.add_extra_convs == "on_lateral":
                     extra_source = laterals[-1]
-                elif self.add_extra_convs == 'on_output':
+                elif self.add_extra_convs == "on_output":
                     extra_source = outs[-1]
                 else:
                     raise NotImplementedError
@@ -387,24 +397,35 @@ class PAFPN(FPN):
             Default: None.
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 num_outs,
-                 start_level=0,
-                 end_level=-1,
-                 add_extra_convs=False,
-                 extra_convs_on_inputs=True,
-                 relu_before_extra_convs=False,
-                 no_norm_on_lateral=False,
-                 conv_cfg=None,
-                 norm_cfg=None,
-                 act_cfg=None):
-        super(PAFPN,
-              self).__init__(in_channels, out_channels, num_outs, start_level,
-                             end_level, add_extra_convs, extra_convs_on_inputs,
-                             relu_before_extra_convs, no_norm_on_lateral,
-                             conv_cfg, norm_cfg, act_cfg)
+    def __init__(
+        self,
+        in_channels,
+        out_channels,
+        num_outs,
+        start_level=0,
+        end_level=-1,
+        add_extra_convs=False,
+        extra_convs_on_inputs=True,
+        relu_before_extra_convs=False,
+        no_norm_on_lateral=False,
+        conv_cfg=None,
+        norm_cfg=None,
+        act_cfg=None,
+    ):
+        super(PAFPN, self).__init__(
+            in_channels,
+            out_channels,
+            num_outs,
+            start_level,
+            end_level,
+            add_extra_convs,
+            extra_convs_on_inputs,
+            relu_before_extra_convs,
+            no_norm_on_lateral,
+            conv_cfg,
+            norm_cfg,
+            act_cfg,
+        )
         # add extra bottom up pathway
         self.downsample_convs = nn.ModuleList()
         self.pafpn_convs = nn.ModuleList()
@@ -418,7 +439,8 @@ class PAFPN(FPN):
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
-                inplace=False)
+                inplace=False,
+            )
             pafpn_conv = ConvModule(
                 out_channels,
                 out_channels,
@@ -427,7 +449,8 @@ class PAFPN(FPN):
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
-                inplace=False)
+                inplace=False,
+            )
             self.downsample_convs.append(d_conv)
             self.pafpn_convs.append(pafpn_conv)
 
@@ -446,7 +469,8 @@ class PAFPN(FPN):
         for i in range(used_backbone_levels - 1, 0, -1):
             prev_shape = laterals[i - 1].shape[2:]
             laterals[i - 1] += F.interpolate(
-                laterals[i], size=prev_shape, mode='nearest')
+                laterals[i], size=prev_shape, mode="nearest"
+            )
 
         # build outputs
         # part 1: from original levels
@@ -460,10 +484,12 @@ class PAFPN(FPN):
 
         outs = []
         outs.append(inter_outs[0])
-        outs.extend([
-            self.pafpn_convs[i - 1](inter_outs[i])
-            for i in range(1, used_backbone_levels)
-        ])
+        outs.extend(
+            [
+                self.pafpn_convs[i - 1](inter_outs[i])
+                for i in range(1, used_backbone_levels)
+            ]
+        )
 
         # part 3: add extra levels
         if self.num_outs > len(outs):
@@ -474,13 +500,12 @@ class PAFPN(FPN):
                     outs.append(F.max_pool2d(outs[-1], 1, stride=2))
             # add conv layers on top of original feature maps (RetinaNet)
             else:
-                if self.add_extra_convs == 'on_input':
+                if self.add_extra_convs == "on_input":
                     orig = inputs[self.backbone_end_level - 1]
                     outs.append(self.fpn_convs[used_backbone_levels](orig))
-                elif self.add_extra_convs == 'on_lateral':
-                    outs.append(self.fpn_convs[used_backbone_levels](
-                        laterals[-1]))
-                elif self.add_extra_convs == 'on_output':
+                elif self.add_extra_convs == "on_lateral":
+                    outs.append(self.fpn_convs[used_backbone_levels](laterals[-1]))
+                elif self.add_extra_convs == "on_output":
                     outs.append(self.fpn_convs[used_backbone_levels](outs[-1]))
                 else:
                     raise NotImplementedError

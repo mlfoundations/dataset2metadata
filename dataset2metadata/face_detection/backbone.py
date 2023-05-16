@@ -5,32 +5,37 @@ from torch.nn.modules.batchnorm import _BatchNorm
 
 # Backbone
 
+
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self,
-                 inplanes,
-                 planes,
-                 stride=1,
-                 dilation=1,
-                 downsample=None,
-                 style='pytorch',
-                 with_cp=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN')):
+    def __init__(
+        self,
+        inplanes,
+        planes,
+        stride=1,
+        dilation=1,
+        downsample=None,
+        style="pytorch",
+        with_cp=False,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN"),
+    ):
         super(BasicBlock, self).__init__()
 
         self.bn1 = nn.BatchNorm2d(planes)
         self.bn2 = nn.BatchNorm2d(planes)
-        #print('init basic block:', inplanes, planes)
+        # print('init basic block:', inplanes, planes)
 
-        self.conv1 = nn.Conv2d(inplanes,
+        self.conv1 = nn.Conv2d(
+            inplanes,
             planes,
             3,
             stride=stride,
             padding=dilation,
             dilation=dilation,
-            bias=False)
+            bias=False,
+        )
 
         self.conv2 = nn.Conv2d(planes, planes, 3, padding=1, bias=False)
 
@@ -126,35 +131,37 @@ class ResNet(nn.Module):
         34: (BasicBlock, (3, 4, 6, 3)),
         35: (BasicBlock, (3, 6, 4, 3)),
         38: (BasicBlock, (3, 8, 4, 3)),
-        40: (BasicBlock, (3, 8, 5, 3))
+        40: (BasicBlock, (3, 8, 5, 3)),
     }
 
-    def __init__(self,
-                 depth,
-                 in_channels=3,
-                 stem_channels=None,
-                 base_channels=64,
-                 num_stages=4,
-                 block_cfg=None,
-                 strides=(1, 2, 2, 2),
-                 dilations=(1, 1, 1, 1),
-                 out_indices=(0, 1, 2, 3),
-                 style='pytorch',
-                 deep_stem=False,
-                 avg_down=False,
-                 no_pool33=False,
-                 frozen_stages=-1,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN', requires_grad=True),
-                 norm_eval=True,
-                 dcn=None,
-                 stage_with_dcn=(False, False, False, False),
-                 plugins=None,
-                 with_cp=False,
-                 zero_init_residual=True):
+    def __init__(
+        self,
+        depth,
+        in_channels=3,
+        stem_channels=None,
+        base_channels=64,
+        num_stages=4,
+        block_cfg=None,
+        strides=(1, 2, 2, 2),
+        dilations=(1, 1, 1, 1),
+        out_indices=(0, 1, 2, 3),
+        style="pytorch",
+        deep_stem=False,
+        avg_down=False,
+        no_pool33=False,
+        frozen_stages=-1,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN", requires_grad=True),
+        norm_eval=True,
+        dcn=None,
+        stage_with_dcn=(False, False, False, False),
+        plugins=None,
+        with_cp=False,
+        zero_init_residual=True,
+    ):
         super(ResNet, self).__init__()
         if depth not in self.arch_settings:
-            raise KeyError(f'invalid depth {depth} for resnet')
+            raise KeyError(f"invalid depth {depth} for resnet")
         self.depth = depth
         if stem_channels is None:
             stem_channels = base_channels
@@ -186,18 +193,18 @@ class ResNet(nn.Module):
             self.block, stage_blocks = self.arch_settings[depth]
         else:
             self.block = BasicBlock
-            stage_blocks = block_cfg['stage_blocks']
-            assert len(stage_blocks)>=num_stages
+            stage_blocks = block_cfg["stage_blocks"]
+            assert len(stage_blocks) >= num_stages
         self.stage_blocks = stage_blocks[:num_stages]
         self.inplanes = stem_channels
 
         self._make_stem_layer(in_channels, stem_channels)
-        if block_cfg is not None and 'stage_planes' in block_cfg:
-            stage_planes = block_cfg['stage_planes']
+        if block_cfg is not None and "stage_planes" in block_cfg:
+            stage_planes = block_cfg["stage_planes"]
         else:
             stage_planes = [base_channels * 2**i for i in range(num_stages)]
 
-        #print('resnet cfg:', stage_blocks, stage_planes)
+        # print('resnet cfg:', stage_blocks, stage_planes)
         self.res_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
             stride = strides[i]
@@ -207,9 +214,9 @@ class ResNet(nn.Module):
                 stage_plugins = self.make_stage_plugins(plugins, i)
             else:
                 stage_plugins = None
-            #planes = base_channels * 2**i
+            # planes = base_channels * 2**i
             planes = stage_planes[i]
-            #print('block detail:', i, self.inplanes, planes, stride)
+            # print('block detail:', i, self.inplanes, planes, stride)
             res_layer = self.make_res_layer(
                 block=self.block,
                 inplanes=self.inplanes,
@@ -221,16 +228,18 @@ class ResNet(nn.Module):
                 avg_down=self.avg_down,
                 with_cp=with_cp,
                 conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg)
+                norm_cfg=norm_cfg,
+            )
             self.inplanes = planes * self.block.expansion
-            layer_name = f'layer{i + 1}'
+            layer_name = f"layer{i + 1}"
             self.add_module(layer_name, res_layer)
             self.res_layers.append(layer_name)
 
         self._freeze_stages()
 
-        self.feat_dim = self.block.expansion * base_channels * 2**(
-            len(self.stage_blocks) - 1)
+        self.feat_dim = (
+            self.block.expansion * base_channels * 2 ** (len(self.stage_blocks) - 1)
+        )
 
     def make_stage_plugins(self, plugins, stage_idx):
         """Make plugins for ResNet ``stage_idx`` th stage.
@@ -274,7 +283,7 @@ class ResNet(nn.Module):
         stage_plugins = []
         for plugin in plugins:
             plugin = plugin.copy()
-            stages = plugin.pop('stages', None)
+            stages = plugin.pop("stages", None)
             assert stages is None or len(stages) == self.num_stages
             # whether to insert plugin into current stage
             if stages is None or stages[stage_idx]:
@@ -300,7 +309,8 @@ class ResNet(nn.Module):
                     kernel_size=3,
                     stride=2,
                     padding=1,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(stem_channels // 2),
                 nn.ReLU(inplace=True),
                 nn.Conv2d(
@@ -309,7 +319,8 @@ class ResNet(nn.Module):
                     kernel_size=3,
                     stride=1,
                     padding=1,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(stem_channels // 2),
                 nn.ReLU(inplace=True),
                 nn.Conv2d(
@@ -318,9 +329,11 @@ class ResNet(nn.Module):
                     kernel_size=3,
                     stride=1,
                     padding=1,
-                    bias=False),
+                    bias=False,
+                ),
                 nn.BatchNorm2d(stem_channels),
-                nn.ReLU(inplace=True))
+                nn.ReLU(inplace=True),
+            )
         else:
             self.conv1 = nn.Conv2d(
                 in_channels,
@@ -328,7 +341,8 @@ class ResNet(nn.Module):
                 kernel_size=7,
                 stride=2,
                 padding=3,
-                bias=False)
+                bias=False,
+            )
             self.bn1 = nn.BatchNorm2d(stem_channels)
             self.relu = nn.ReLU(inplace=True)
         if self.no_pool33:
@@ -350,7 +364,7 @@ class ResNet(nn.Module):
                         param.requires_grad = False
 
         for i in range(1, self.frozen_stages + 1):
-            m = getattr(self, f'layer{i}')
+            m = getattr(self, f"layer{i}")
             m.eval()
             for param in m.parameters():
                 param.requires_grad = False
@@ -394,7 +408,8 @@ class ResNetV1e(ResNet):
 
     def __init__(self, **kwargs):
         super(ResNetV1e, self).__init__(
-            deep_stem=True, avg_down=True, no_pool33=True, **kwargs)
+            deep_stem=True, avg_down=True, no_pool33=True, **kwargs
+        )
 
 
 class ResLayer(nn.Sequential):
@@ -415,17 +430,19 @@ class ResLayer(nn.Sequential):
             False for Hourglass, True for ResNet. Default: True
     """
 
-    def __init__(self,
-                 block,
-                 inplanes,
-                 planes,
-                 num_blocks,
-                 stride=1,
-                 avg_down=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN'),
-                 downsample_first=True,
-                 **kwargs):
+    def __init__(
+        self,
+        block,
+        inplanes,
+        planes,
+        num_blocks,
+        stride=1,
+        avg_down=False,
+        conv_cfg=None,
+        norm_cfg=dict(type="BN"),
+        downsample_first=True,
+        **kwargs,
+    ):
         self.block = block
 
         downsample = None
@@ -439,16 +456,21 @@ class ResLayer(nn.Sequential):
                         kernel_size=stride,
                         stride=stride,
                         ceil_mode=True,
-                        count_include_pad=False))
-            downsample.extend([
-                nn.Conv2d(
-                    inplanes,
-                    planes * block.expansion,
-                    kernel_size=1,
-                    stride=conv_stride,
-                    bias=False),
-                nn.BatchNorm2d(planes * block.expansion)
-            ])
+                        count_include_pad=False,
+                    )
+                )
+            downsample.extend(
+                [
+                    nn.Conv2d(
+                        inplanes,
+                        planes * block.expansion,
+                        kernel_size=1,
+                        stride=conv_stride,
+                        bias=False,
+                    ),
+                    nn.BatchNorm2d(planes * block.expansion),
+                ]
+            )
             downsample = nn.Sequential(*downsample)
 
         layers = []
@@ -461,7 +483,9 @@ class ResLayer(nn.Sequential):
                     downsample=downsample,
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
-                    **kwargs))
+                    **kwargs,
+                )
+            )
             inplanes = planes * block.expansion
             for _ in range(1, num_blocks):
                 layers.append(
@@ -471,7 +495,9 @@ class ResLayer(nn.Sequential):
                         stride=1,
                         conv_cfg=conv_cfg,
                         norm_cfg=norm_cfg,
-                        **kwargs))
+                        **kwargs,
+                    )
+                )
 
         else:  # downsample_first=False is for HourglassModule
             for _ in range(num_blocks - 1):
@@ -482,7 +508,9 @@ class ResLayer(nn.Sequential):
                         stride=1,
                         conv_cfg=conv_cfg,
                         norm_cfg=norm_cfg,
-                        **kwargs))
+                        **kwargs,
+                    )
+                )
             layers.append(
                 block(
                     inplanes=inplanes,
@@ -491,5 +519,7 @@ class ResLayer(nn.Sequential):
                     downsample=downsample,
                     conv_cfg=conv_cfg,
                     norm_cfg=norm_cfg,
-                    **kwargs))
+                    **kwargs,
+                )
+            )
         super(ResLayer, self).__init__(*layers)
