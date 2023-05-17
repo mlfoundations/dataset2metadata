@@ -41,6 +41,7 @@ def check_yml(yml):
         'additional_fields',
         'custom_pypath',
         'reprocess',
+        'use_datacomp_keys'
     ]
 
     for f in yml_fields:
@@ -124,6 +125,7 @@ def process(
         name,
         feature_fields,
         parquet_fields,
+        yml['use_datacomp_keys'] if 'use_datacomp_keys' in yml else False
     )
 
     for sample in dataloader:

@@ -8,6 +8,7 @@ import torch
 import fsspec
 
 logging.getLogger().setLevel(logging.INFO)
+from dataset2metadata.registry import d2m_to_datacomp_keys
 
 class Writer(object):
 
@@ -16,6 +17,7 @@ class Writer(object):
             name: str,
             feature_fields: List[str],
             parquet_fields: List[str],
+            use_datacomp_keys: bool,
         ) -> None:
         self.name = name
 
@@ -25,11 +27,26 @@ class Writer(object):
         # store other metadata like image height, ultimately in a parquet
         self.parquet_store = {e: [] for e in parquet_fields}
 
+        # if true, then we will remap keys using d2m_to_datacomp_keys for some fields
+        self.use_datacomp_keys = use_datacomp_keys
+
     def update_feature_store(self, k, v):
-        self.feature_store[k].append(v)
+        if self.use_datacomp_keys:
+            if k in d2m_to_datacomp_keys:
+                self.feature_store[d2m_to_datacomp_keys[k]].append(v)
+            else:
+                self.feature_store[k].append(v)
+        else:
+            self.feature_store[k].append(v)
 
     def update_parquet_store(self, k, v):
-        self.parquet_store[k].append(v)
+        if self.use_datacomp_keys:
+            if k in d2m_to_datacomp_keys:
+                self.parquet_store[d2m_to_datacomp_keys[k]].append(v)
+            else:
+                self.parquet_store[k].append(v)
+        else:
+            self.parquet_store[k].append(v)
 
     def write(self, out_dir_path):
         try:

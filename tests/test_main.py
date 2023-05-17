@@ -25,17 +25,25 @@ def test_local():
         print(str(e))
         assert False
 
-# def test_s3():
-#     try:
-#         process('./tests/ymls/test_s3.yml')
-#         assert True
-#     except Exception as e:
-#         print(str(e))
-#         assert False
+def test_s3():
+    try:
+        process('./tests/ymls/test_s3.yml')
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
 
 def test_cache():
     try:
         process('./tests/ymls/test_cache.yml')
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
+
+def test_datacomp_names():
+    try:
+        process('./tests/ymls/test_local_datacomp_names.yml')
         assert True
     except Exception as e:
         print(str(e))
