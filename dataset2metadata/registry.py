@@ -44,6 +44,16 @@ postprocess_feature_lookup = {
     "dedup-isc-ft-v107-image": partial(post.select, model="dedup-isc-ft-v107", index=0),
 }
 
+d2m_to_datacomp_keys = {
+    "oai-clip-vit-b32-score": "clip_b32_similarity_score",
+    "oai-clip-vit-l14-score": "clip_l14_similarity_score",
+    "face-boxes": "face_bboxes",
+    "oai-clip-vit-b32-image": "b32_img",
+    "oai-clip-vit-b32-text": "b32_txt",
+    "oai-clip-vit-l14-image": "l14_img",
+    "oai-clip-vit-l14-text": "l14_txt",
+    "dedup-isc-ft-v107-image": "dedup",
+}
 
 # update functions
 def update_registry(module):
