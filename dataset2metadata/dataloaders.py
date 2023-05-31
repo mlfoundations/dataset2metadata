@@ -1,5 +1,7 @@
 from functools import partial
 import logging
+import hashlib
+import json
 
 import webdataset as wds
 from dataset2metadata.preprocessors import json_decoder
@@ -56,6 +58,19 @@ def tarfile_to_samples_nothrow(src, handler=wds.warn_and_continue):
     samples = group_by_keys_nothrow(files, handler=handler)
 
     return samples
+
+
+def add_json(sample):
+    if "json" not in sample:
+        # sample.pop("npy")
+        sample["json"] = json.dumps(
+            {
+                "url": sample["__url__"],
+                "key": sample["__key__"],
+                "uid": hashlib.md5(str(sample["__key__"]).encode()).hexdigest(),
+            }
+        ).encode("utf-8")
+    return sample
 
 
 def filter_no_caption_or_no_image(sample):
@@ -133,14 +148,14 @@ def create_loader(input_shards, models, additional_fields, nworkers, batch_size)
         [
             wds.split_by_worker,
             tarfile_to_samples_nothrow,
-            # wds.tarfile_to_samples(handler=wds.warn_and_continue),
-            wds.select(filter_no_caption_or_no_image),
+            wds.map(add_json),
+            # wds.select(filter_no_caption_or_no_image),
             wds.decode(
                 "pilrgb",
                 partial(json_decoder, json_keys=additional_fields),
-                handler=wds.warn_and_continue,
+                # handler=wds.warn_and_continue,
             ),
-            wds.rename(image="jpg;png;jpeg;webp", text="txt"),
+            wds.rename(image="jpg;png;jpeg;webp"),  # , text="txt"),
             wds.to_tuple(*tuple_fields),
             wds.map_tuple(*unique_preprocessors),
             wds.batched(batch_size, partial=True),
