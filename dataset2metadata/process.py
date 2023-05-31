@@ -289,7 +289,7 @@ def process(
         logging.info("all jobs already processed. exiting.")
         return
 
-    wandb.init(project="dataset2metadata_xlarge", name=job_friendly_name)
+    wandb.init(project="dataset2metadata_medium_iblip2", name=job_friendly_name)
 
     # initializing task queues
     send_queue = Queue()
@@ -321,7 +321,7 @@ def process(
             out_queue=receive_queue,
         )
     except Exception as e:
-        print(e)
+        logging.exception("bad")
         print("main thread exited ungracefully")
 
     # signal the i/o thread it should wrap up

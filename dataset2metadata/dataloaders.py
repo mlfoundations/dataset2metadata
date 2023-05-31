@@ -1,4 +1,5 @@
 from functools import partial
+import logging
 
 import webdataset as wds
 from dataset2metadata.preprocessors import json_decoder
@@ -8,6 +9,8 @@ from webdataset.tariterators import (
     tar_file_expander,
     valid_sample,
 )
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def group_by_keys_nothrow(
@@ -51,7 +54,17 @@ def tarfile_to_samples_nothrow(src, handler=wds.warn_and_continue):
     streams = url_opener(src, handler=handler)
     files = tar_file_expander(streams, handler=handler)
     samples = group_by_keys_nothrow(files, handler=handler)
+
     return samples
+
+
+def filter_no_caption_or_no_image(sample):
+    # taken from: https://github.com/mlfoundations/open_clip/blob/main/src/training/data.py
+    has_caption = "txt" in sample
+    has_image = (
+        "png" in sample or "jpg" in sample or "jpeg" in sample or "webp" in sample
+    )
+    return has_caption and has_image
 
 
 def get_to_tuple_directives(models, additional_fields):
@@ -111,6 +124,7 @@ def create_loader(input_shards, models, additional_fields, nworkers, batch_size)
     tuple_fields = [e[0] for e in unique_derectives]
     unique_preprocessors = [preprocessor_lookup[e[-1]] for e in unique_derectives]
 
+    logging.info(input_shards)
     pipeline = [
         wds.SimpleShardList(input_shards),
     ]
@@ -120,6 +134,7 @@ def create_loader(input_shards, models, additional_fields, nworkers, batch_size)
             wds.split_by_worker,
             tarfile_to_samples_nothrow,
             # wds.tarfile_to_samples(handler=wds.warn_and_continue),
+            wds.select(filter_no_caption_or_no_image),
             wds.decode(
                 "pilrgb",
                 partial(json_decoder, json_keys=additional_fields),
