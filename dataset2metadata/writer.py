@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import List
+import json
 
 import pandas as pd
 import numpy as np
@@ -25,11 +26,22 @@ class Writer(object):
         # store other metadata like image height, ultimately in a parquet
         self.parquet_store = {e: [] for e in parquet_fields}
 
+        # store stats about how long each batch took
+        self.time_store = []
+
     def update_feature_store(self, k, v):
         self.feature_store[k].append(v)
 
     def update_parquet_store(self, k, v):
         self.parquet_store[k].append(v)
+
+    def update_time_store(self, sample_time, loader_time):
+        self.time_store.append(
+            {
+                "sample time (s)": sample_time,
+                "loader time (s)": loader_time,
+            }
+        )
 
     def write(self, out_dir_path):
         try:
@@ -43,9 +55,13 @@ class Writer(object):
             for k in self.parquet_store:
                 self.parquet_store[k] = self._flatten_helper(self.parquet_store[k])
 
+            num_samples = -1
+
             if len(self.parquet_store):
                 logging.info("covert to df")
                 df = pd.DataFrame.from_dict(self.parquet_store)
+
+                num_samples = df.shape[0]
 
                 fs, output_path = fsspec.core.url_to_fs(
                     os.path.join(out_dir_path, f"{self.name}.parquet")
@@ -66,7 +82,28 @@ class Writer(object):
 
                 logging.info(f'saved features: {f"{self.name}.npz"}')
 
-                return True
+            if len(self.time_store):
+                fs, output_path = fsspec.core.url_to_fs(
+                    os.path.join(out_dir_path, f"{self.name}.json")
+                )
+                with fs.open(output_path, "w") as f:
+                    logging.info("saving json logs")
+
+                    total_load_time = sum([e["sample time (s)"] for e in self.time_store])
+                    total_inf_time = sum([e["loader time (s)"] for e in self.time_store])
+
+                    json.dump(
+                        {
+                            "sample time (s)": total_load_time,
+                            "loader time (s)": total_inf_time,
+                            "number of samples": num_samples,
+                        },
+                        f
+                    )
+
+                logging.info(f'saved time logs: {f"{self.name}.json"}')
+
+            return True
 
         except Exception as e:
             logging.exception(e)

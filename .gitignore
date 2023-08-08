@@ -10,7 +10,6 @@ tests/tar_test_files/
 src/
 examples/jobs/
 examples/logs/
-dev/
 jobs*
 logs*
 tmp*

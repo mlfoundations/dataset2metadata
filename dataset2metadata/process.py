@@ -1,4 +1,5 @@
 import os
+import traceback
 import pathlib
 from importlib.machinery import SourceFileLoader
 from threading import Thread
@@ -111,9 +112,17 @@ def process_helper(
             parquet_fields,
         )
 
+        t_loader_end = None
+        t_inference_start = None
+        t_inference_end = None
+        t_loader_start = time.time()
+
         for sample in dataloader:
+            t_loader_end = time.time()
+
             model_outputs = {}
 
+            t_inference_start = time.time()
             # eval all models sequentially in a top sort order
             for m_str in topsort_order:
                 model_input = []
@@ -150,6 +159,8 @@ def process_helper(
                 if len(yml["additional_fields"]):
                     model_outputs["json"] = sample[-1]
 
+            t_inference_end = time.time()
+
             if "postprocess_features" in yml:
                 for k in yml["postprocess_features"]:
                     writer.update_feature_store(
@@ -172,11 +183,18 @@ def process_helper(
                 )
                 for i, v in enumerate(transposed_additional_fields):
                     writer.update_parquet_store(yml["additional_fields"][i], v)
+
+            sample_time = t_inference_end - t_inference_start
+            loader_time = t_loader_end - t_loader_start
+
+            writer.update_time_store(sample_time, loader_time)
+
+            t_loader_start = time.time()
+
         logging.info(f"starting to write: {writer.name}")
         out_queue.put_nowait((writer, yml["output_metadata_dir"]))
         time.sleep(5)
         logging.info(f"continuing on gpu!")
-        # writer.write()
 
 
 def write_helper(num_groups, receive_queue, done_queue):
@@ -194,7 +212,7 @@ def write_helper(num_groups, receive_queue, done_queue):
                 main_exited = True
 
             if main_exited and receive_queue_empty:
-                raise TimeoutError(
+                raise ValueError(
                     f"main exited but only processed {write_counter} out of {num_groups} groups"
                 )
         except TimeoutError:
@@ -321,7 +339,7 @@ def process(
             out_queue=receive_queue,
         )
     except Exception as e:
-        print(e)
+        traceback.print_tb(e.__traceback__)
         print("main thread exited ungracefully")
 
     # signal the i/o thread it should wrap up
