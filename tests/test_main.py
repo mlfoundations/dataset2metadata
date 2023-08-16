@@ -1,13 +1,15 @@
 import pytest
 from dataset2metadata.process import process
 
+
 def test_braceexpand():
     try:
-        process('./tests/ymls/test_braceexpand.yml')
+        process("./tests/ymls/test_braceexpand.yml")
         assert True
     except Exception as e:
         print(str(e))
         assert False
+
 
 # def test_custom():
 #     try:
@@ -17,9 +19,10 @@ def test_braceexpand():
 #         print(str(e))
 #         assert False
 
+
 def test_local():
     try:
-        process('./tests/ymls/test_local.yml')
+        process("./tests/ymls/test_local.yml")
         assert True
     except Exception as e:
         print(str(e))
@@ -33,9 +36,10 @@ def test_s3():
         print(str(e))
         assert False
 
+
 def test_cache():
     try:
-        process('./tests/ymls/test_cache.yml')
+        process("./tests/ymls/test_cache.yml")
         assert True
     except Exception as e:
         print(str(e))

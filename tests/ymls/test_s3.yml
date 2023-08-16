@@ -28,7 +28,7 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "pipe:aws s3 cp s3://s-laion/datanet_1B_pool_part_2/00001308.tar -" # brace expand suported
-output_metadata_dir: "s3://s-laion/sy_dbg" # can be arbitrary path
+input_tars: "pipe:aws s3 cp s3://laion-west/datanet_1B_pool_part_2/00001308.tar -" # brace expand suported
+output_metadata_dir: "s3://laion-west/sy_dbg" # can be arbitrary path
 custom_pypath: null # if model not known, look in this python file for implementation
 reprocess: True
