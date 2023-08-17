@@ -28,7 +28,7 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "./tests/tar_test_files/000057{17..19}.tar" # brace expand suported
+input_tars: "./tests/tar_test_files/000013{08..10}.tar" # brace expand suported
 output_metadata_dir: "./tests/test_out" # can be arbitrary path
 custom_pypath: null # if model not known, look in this python file for implementation
 reprocess: True

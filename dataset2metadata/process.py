@@ -42,12 +42,12 @@ def check_yml(yml):
     ]
 
     yml_optional_fields = [
-        'postprocess_columns',
-        'postprocess_features',
-        'additional_fields',
-        'custom_pypath',
-        'reprocess',
-        'use_datacomp_keys'
+        "postprocess_columns",
+        "postprocess_features",
+        "additional_fields",
+        "custom_pypath",
+        "reprocess",
+        "use_datacomp_keys",
         "tars_per_wds",  # TODO: support braceexpand
         "wandb",
     ]
@@ -111,6 +111,7 @@ def process_helper(
             name,
             feature_fields,
             parquet_fields,
+            yml["use_datacomp_keys"] if "use_datacomp_keys" in yml else False,
         )
 
         t_loader_end = None

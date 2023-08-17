@@ -14,19 +14,36 @@ from dataset2metadata.registry import d2m_to_datacomp_keys
 
 class Writer(object):
     def __init__(
-            self,
-            name: str,
-            feature_fields: List[str],
-            parquet_fields: List[str],
-            use_datacomp_keys: bool,
-        ) -> None:
+        self,
+        name: str,
+        feature_fields: List[str],
+        parquet_fields: List[str],
+        use_datacomp_keys: bool,
+    ) -> None:
         self.name = name
 
-        # store things like CLIP features, ultimately in an npz
-        self.feature_store = {e: [] for e in feature_fields}
+        self.feature_store = {}
+        self.parquet_store = {}
 
-        # store other metadata like image height, ultimately in a parquet
-        self.parquet_store = {e: [] for e in parquet_fields}
+        if use_datacomp_keys:
+            for e in feature_fields:
+                if e in d2m_to_datacomp_keys:
+                    self.feature_store[d2m_to_datacomp_keys[e]] = []
+                else:
+                    self.feature_store[e] = []
+
+            for e in parquet_fields:
+                if e in d2m_to_datacomp_keys:
+                    self.parquet_store[d2m_to_datacomp_keys[e]] = []
+                else:
+                    self.parquet_store[e] = []
+
+        else:
+            # store things like CLIP features, ultimately in an npz
+            self.feature_store = {e: [] for e in feature_fields}
+
+            # store other metadata like image height, ultimately in a parquet
+            self.parquet_store = {e: [] for e in parquet_fields}
 
         # if true, then we will remap keys using d2m_to_datacomp_keys for some fields
         self.use_datacomp_keys = use_datacomp_keys
@@ -106,8 +123,12 @@ class Writer(object):
                 with fs.open(output_path, "w") as f:
                     logging.info("saving json logs")
 
-                    total_load_time = sum([e["sample time (s)"] for e in self.time_store])
-                    total_inf_time = sum([e["loader time (s)"] for e in self.time_store])
+                    total_load_time = sum(
+                        [e["sample time (s)"] for e in self.time_store]
+                    )
+                    total_inf_time = sum(
+                        [e["loader time (s)"] for e in self.time_store]
+                    )
 
                     json.dump(
                         {
@@ -115,7 +136,7 @@ class Writer(object):
                             "loader time (s)": total_inf_time,
                             "number of samples": num_samples,
                         },
-                        f
+                        f,
                     )
 
                 logging.info(f'saved time logs: {f"{self.name}.json"}')

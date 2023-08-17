@@ -1,5 +1,5 @@
 wandb/
-.vscode/*
+.vscode*
 out/
 logs*/
 *.err

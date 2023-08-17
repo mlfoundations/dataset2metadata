@@ -12,6 +12,6 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "s3://laion-west/datanet_100M_pool-baselines/basic/all/seed_1/reshards_n1/0/" # brace expand suported
-output_metadata_dir: "s3://laion-west/thaottn/100M_pool_blip2_captions" # can be arbitrary path - TODO: SET THIS
-custom_pypath: "./custom/my_blip2.py" # if model not known, look in this python file for implementation
+input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_1B_pool/00001308.tar -" # brace expand suported
+output_metadata_dir: "./tests/test_out" # can be arbitrary path including s3 - TODO: SET THIS
+custom_pypath: "./examples/blip2/my_blip2.py" # if model not known, look in this python file for implementation

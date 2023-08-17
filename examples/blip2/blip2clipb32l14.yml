@@ -23,7 +23,7 @@ additional_fields: # fields in a webdataset json to carry over into the metadata
 nworkers: 2
 batch_size: 512
 device: 0
-input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_100M_pool-baselines/basic/all/seed_1/reshards_n1/0/00001284.tar -" # brace expand suported
-output_metadata_dir: "s3://laion-west/thaottn/dbg" # can be arbitrary path - TODO: SET THIS
+input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_1B_pool/00001308.tar -" # brace expand suported
+output_metadata_dir: "./tests/test_out" # can be arbitrary path including s3 - TODO: SET THIS
 custom_pypath: "./examples/blip2/my_blip2clipb32l14.py" # if model not known, look in this python file for implementation
 reprocess: True # if true will process from scratch, else will just process tars not already processed

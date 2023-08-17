@@ -11,13 +11,22 @@ def test_braceexpand():
         assert False
 
 
-# def test_custom():
-#     try:
-#         process('./custom/blip2.yml')
-#         assert True
-#     except Exception as e:
-#         print(str(e))
-#         assert False
+def test_custom1():
+    try:
+        process("./examples/blip2/blip2.yml")
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
+
+
+def test_custom2():
+    try:
+        process("./examples/blip2/blip2clipb32l14.yml")
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
 
 
 def test_local():
@@ -28,9 +37,10 @@ def test_local():
         print(str(e))
         assert False
 
+
 def test_s3():
     try:
-        process('./tests/ymls/test_s3.yml')
+        process("./tests/ymls/test_s3.yml")
         assert True
     except Exception as e:
         print(str(e))
@@ -45,9 +55,10 @@ def test_cache():
         print(str(e))
         assert False
 
+
 def test_datacomp_names():
     try:
-        process('./tests/ymls/test_local_datacomp_names.yml')
+        process("./tests/ymls/test_local_datacomp_names.yml")
         assert True
     except Exception as e:
         print(str(e))
