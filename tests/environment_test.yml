@@ -8,3 +8,4 @@ dependencies:
     - -r ../requirements.txt
     - s3fs
     - transformers
+    - accelerate

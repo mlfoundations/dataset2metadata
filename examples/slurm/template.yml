@@ -29,5 +29,5 @@ nworkers: 4
 batch_size: 512
 device: 0
 input_tars: "pipe:aws s3 cp {} -" # brace expand suported
-output_metadata_dir: "s3://s-laion/sy_dbg_multi_gpu" # can be arbitrary path
+output_metadata_dir: "s3://laion-west/sy_dbg_multi_gpu" # can be arbitrary path
 custom_pypath: null # if model not known, look in this python file for implementation

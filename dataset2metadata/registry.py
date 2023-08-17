@@ -52,8 +52,9 @@ d2m_to_datacomp_keys = {
     "oai-clip-vit-b32-text": "b32_txt",
     "oai-clip-vit-l14-image": "l14_img",
     "oai-clip-vit-l14-text": "l14_txt",
-    "dedup-isc-ft-v107-image": "dedup",
+    "dedup-isc-ft-v107-score": "dedup",
 }
+
 
 # update functions
 def update_registry(module):

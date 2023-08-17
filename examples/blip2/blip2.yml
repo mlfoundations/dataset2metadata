@@ -1,0 +1,17 @@
+models: # model directives, specifying the models to instantiate
+  - blip2
+postprocess_columns: # postprocessing directives
+  - blip2-cap
+additional_fields: # fields in a webdataset json to carry over into the metadata
+  - uid
+  - url
+  - caption
+  - original_width
+  - original_height
+  - sha256
+nworkers: 2
+batch_size: 512
+device: 0
+input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_1B_pool/00001308.tar -" # brace expand suported
+output_metadata_dir: "./tests/test_out" # can be arbitrary path including s3 - TODO: SET THIS
+custom_pypath: "./examples/blip2/my_blip2.py" # if model not known, look in this python file for implementation

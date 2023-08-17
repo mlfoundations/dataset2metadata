@@ -1,0 +1,29 @@
+models: # model directives, specifying the models to instantiate
+  - blip2clipb32l14
+postprocess_columns: # postprocessing directives
+  - blip2-cap
+  - oai-clip-b32-score
+  - oai-clip-b32-blip2-score
+  - oai-clip-l14-score
+  - oai-clip-l14-blip2-score
+postprocess_features: # saved in an npz format
+  - oai-clip-b32-image
+  - oai-clip-b32-text
+  - oai-clip-b32-blip2-text
+  - oai-clip-l14-image
+  - oai-clip-l14-text
+  - oai-clip-l14-blip2-text
+additional_fields: # fields in a webdataset json to carry over into the metadata
+  - uid
+  - url
+  - caption
+  - original_width
+  - original_height
+  - sha256
+nworkers: 2
+batch_size: 512
+device: 0
+input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_1B_pool/00001308.tar -" # brace expand suported
+output_metadata_dir: "./tests/test_out" # can be arbitrary path including s3 - TODO: SET THIS
+custom_pypath: "./examples/blip2/my_blip2clipb32l14.py" # if model not known, look in this python file for implementation
+reprocess: True # if true will process from scratch, else will just process tars not already processed
