@@ -1,17 +1,17 @@
-detoxify==0.5.0
-fire==0.4.0
-fsspec==2022.11.0
-numpy==1.23.5
-pandas==1.5.1
-Pillow==9.4.0
-pyarrow==7.0.0
-pysimdjson==5.0.2
-pytest==7.2.0
-PyYAML==6.0
+detoxify
+fire
+fsspec
+numpy
+pandas
+Pillow
+pyarrow
+pysimdjson
+pytest
+PyYAML
 torch
 torchvision
-tqdm==4.64.1
-wandb==0.12.21
-webdataset==0.2.31
+tqdm
+wandb
+webdataset
 clip @ git+https://github.com/openai/CLIP.git#egg=clip
 isc_feature_extractor @ git+https://github.com/sagadre/ISC21-Descriptor-Track-1st#egg=isc_feature_extractor
