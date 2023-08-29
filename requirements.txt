@@ -14,4 +14,4 @@ tqdm==4.64.1
 wandb==0.12.21
 webdataset==0.2.31
 clip @ git+https://github.com/openai/CLIP.git#egg=clip
-isc_feature_extractor @ git+https://github.com/lyakaap/ISC21-Descriptor-Track-1st#egg=isc_feature_extractor
+isc_feature_extractor @ git+https://github.com/sagadre/ISC21-Descriptor-Track-1st#egg=isc_feature_extractor
