@@ -49,7 +49,7 @@ def check_yml(yml):
         "reprocess",
         "use_datacomp_keys",
         "tars_per_wds",  # TODO: support braceexpand
-        "wandb",
+        "logging",
     ]
 
     for f in yml_fields:
@@ -309,7 +309,8 @@ def process(
         logging.info("all jobs already processed. exiting.")
         return
 
-    wandb.init(project="dataset2metadata_xlarge", name=job_friendly_name)
+    if "logging" in yml and yml["logging"]:
+        wandb.init(project="dataset2metadata", name=job_friendly_name)
 
     # initializing task queues
     send_queue = Queue()
@@ -342,6 +343,7 @@ def process(
         )
     except Exception as e:
         traceback.print_tb(e.__traceback__)
+        print(e)
         print("main thread exited ungracefully")
 
     # signal the i/o thread it should wrap up

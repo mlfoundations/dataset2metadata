@@ -11,7 +11,7 @@ def test_braceexpand():
         assert False
 
 
-def test_custom1():
+def test_custom_blip2():
     try:
         process("./examples/blip2/blip2.yml")
         assert True
@@ -20,7 +20,7 @@ def test_custom1():
         assert False
 
 
-def test_custom2():
+def test_custom_blip2clipb32l14():
     try:
         process("./examples/blip2/blip2clipb32l14.yml")
         assert True

@@ -15,3 +15,4 @@ device: 0
 input_tars: "pipe:aws s3 cp s3://datanet-west/datanet_1B_pool/00001308.tar -" # brace expand suported
 output_metadata_dir: "./tests/test_out" # can be arbitrary path including s3 - TODO: SET THIS
 custom_pypath: "./examples/blip2/my_blip2.py" # if model not known, look in this python file for implementation
+reprocess: True # if true will process from scratch, else will just process tars not already processed
