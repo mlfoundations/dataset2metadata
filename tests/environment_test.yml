@@ -9,3 +9,4 @@ dependencies:
     - s3fs
     - transformers
     - accelerate
+    - diffusers
