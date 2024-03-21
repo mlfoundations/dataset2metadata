@@ -50,6 +50,7 @@ def check_yml(yml):
         "use_datacomp_keys",
         "tars_per_wds",  # TODO: support braceexpand
         "logging",
+        "warn_and_continue",
     ]
 
     for f in yml_fields:
@@ -73,9 +74,7 @@ def process_helper(
     models = {m_str: model_lookup[m_str](yml["device"]) for m_str in yml["models"]}
 
     # deciding order to run them in based on dependencies
-    topsort_order = topsort(
-        {m_str: model_lookup[m_str].dependencies for m_str in yml["models"]}
-    )
+    topsort_order = topsort({m_str: model_lookup[m_str].dependencies for m_str in yml["models"]})
 
     logging.info(f"topsort model evaluation order: {topsort_order}")
 
@@ -89,12 +88,10 @@ def process_helper(
             break
 
         # create dataloader based on user input
+        warn_and_continue = "warn_and_continue" in yml and yml["warn_and_continue"]
+        additional_fields = yml["additional_fields"] if "additional_fields" in yml else None
         dataloader, input_map = create_loader(
-            group,
-            yml["models"],
-            yml["additional_fields"],
-            yml["nworkers"],
-            yml["batch_size"],
+            group, yml["models"], additional_fields, yml["nworkers"], yml["batch_size"], warn_and_continue
         )
 
         # initialize the writer that stores results and dumps them to store
@@ -104,7 +101,7 @@ def process_helper(
             feature_fields = yml["postprocess_features"]
         if "postprocess_columns" in yml:
             parquet_fields.extend(yml["postprocess_columns"])
-        if "additional_fields" in yml:
+        if "additional_fields" in yml and yml["additional_fields"] is not None:
             parquet_fields.extend(yml["additional_fields"])
 
         writer = Writer(
@@ -138,9 +135,7 @@ def process_helper(
                                 # if list needs to be moved to device transpose and move it
                                 sample[i] = list(zip(*sample[i]))
                                 for j in range(len(sample[i])):
-                                    sample[i][j] = torch.cat(sample[i][j]).to(
-                                        yml["device"]
-                                    )
+                                    sample[i][j] = torch.cat(sample[i][j]).to(yml["device"])
                                 cache[i] = sample[i]
                             else:
                                 cache[i] = sample[i].to(yml["device"])
@@ -158,31 +153,31 @@ def process_helper(
                     model_outputs[m_str] = models[m_str](*model_input)
 
                 # TODO: make this more general, right now assumes last entry is json fields
-                if len(yml["additional_fields"]):
+                if (
+                    ("additional_fields" in yml)
+                    and (yml["additional_fields"] is not None)
+                    and (len(yml["additional_fields"]))
+                ):
                     model_outputs["json"] = sample[-1]
 
             t_inference_end = time.time()
 
             if "postprocess_features" in yml:
                 for k in yml["postprocess_features"]:
-                    writer.update_feature_store(
-                        k, postprocess_feature_lookup[k](model_outputs)
-                    )
+                    writer.update_feature_store(k, postprocess_feature_lookup[k](model_outputs))
 
             if "postprocess_columns" in yml:
                 for k in yml["postprocess_columns"]:
-                    writer.update_parquet_store(
-                        k, postprocess_parquet_lookup[k](model_outputs)
-                    )
+                    writer.update_parquet_store(k, postprocess_parquet_lookup[k](model_outputs))
 
             # if additional fields from json need to be saved, add those to the store
-            if "additional_fields" in yml and len(yml["additional_fields"]):
-                transposed_additional_fields = postprocess_parquet_lookup[
-                    "json-transpose"
-                ](model_outputs)
-                assert len(transposed_additional_fields) == len(
-                    yml["additional_fields"]
-                )
+            if (
+                ("additional_fields" in yml)
+                and (yml["additional_fields"] is not None)
+                and len(yml["additional_fields"])
+            ):
+                transposed_additional_fields = postprocess_parquet_lookup["json-transpose"](model_outputs)
+                assert len(transposed_additional_fields) == len(yml["additional_fields"])
                 for i, v in enumerate(transposed_additional_fields):
                     writer.update_parquet_store(yml["additional_fields"][i], v)
 
@@ -214,9 +209,7 @@ def write_helper(num_groups, receive_queue, done_queue):
                 main_exited = True
 
             if main_exited and receive_queue_empty:
-                raise ValueError(
-                    f"main exited but only processed {write_counter} out of {num_groups} groups"
-                )
+                raise ValueError(f"main exited but only processed {write_counter} out of {num_groups} groups")
         except TimeoutError:
             pass
 
@@ -248,9 +241,7 @@ def process(
 
     # if the user specifies specific custom implementaion of their own update the registry
     if "custom_pypath" in yml and yml["custom_pypath"] is not None:
-        custom = SourceFileLoader(
-            pathlib.Path(yml["custom_pypath"]).stem, yml["custom_pypath"]
-        ).load_module()
+        custom = SourceFileLoader(pathlib.Path(yml["custom_pypath"]).stem, yml["custom_pypath"]).load_module()
 
         update_registry(custom)
 
