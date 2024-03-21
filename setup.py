@@ -10,11 +10,7 @@ if __name__ == "__main__":
     def _read_reqs(relpath):
         fullpath = os.path.join(os.path.dirname(__file__), relpath)
         with open(fullpath) as f:
-            return [
-                s.strip()
-                for s in f.readlines()
-                if (s.strip() and not s.startswith("#"))
-            ]
+            return [s.strip() for s in f.readlines() if (s.strip() and not s.startswith("#"))]
 
     REQUIREMENTS = _read_reqs("requirements.txt")
 
@@ -22,14 +18,12 @@ if __name__ == "__main__":
         name="dataset2metadata",
         packages=find_packages(),
         include_package_data=True,
-        version="0.1.0",
+        version="0.1.1",
         license="MIT",
         description="Generate infered metadata for a dataset",
         long_description=long_description,
         long_description_content_type="text/markdown",
-        entry_points={
-            "console_scripts": ["dataset2metadata = dataset2metadata.main:main"]
-        },
+        entry_points={"console_scripts": ["dataset2metadata = dataset2metadata.main:main"]},
         author="Samir Gadre",
         author_email="syagadre@gmail.com",
         url="https://github.com/mlfoundations/dataset2metadata",

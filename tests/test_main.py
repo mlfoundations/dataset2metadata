@@ -38,6 +38,24 @@ def test_local():
         assert False
 
 
+def test_local_no_additional():
+    try:
+        process("./tests/ymls/test_local_no_additional.yml")
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
+
+
+def test_local_warn():
+    try:
+        process("./tests/ymls/test_local_warn.yml")
+        assert True
+    except Exception as e:
+        print(str(e))
+        assert False
+
+
 def test_s3():
     try:
         process("./tests/ymls/test_s3.yml")
